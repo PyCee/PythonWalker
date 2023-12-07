@@ -1,0 +1,515 @@
+#include "pch.h"
+#include "CppUnitTest.h"
+
+#include <filesystem>
+
+#include "../PythonWalker/PythonWalker.h"
+#include "CodeGenStrings.h"
+#include <fstream>
+
+using namespace Microsoft::VisualStudio::CppUnitTestFramework;
+
+//https://learn.microsoft.com/en-us/visualstudio/test/writing-unit-tests-for-c-cpp?view=vs-2022
+
+
+template <typename T>
+bool VectorContains(std::vector<T> vec, T val)
+{
+	return std::find(vec.begin(), vec.end(), val) != vec.end();
+}
+class PyPosition : public PyWalkerObjectInstance {
+public:
+	using PyWalkerObjectInstance::PyWalkerObjectInstance;
+	PyPosition() : PyWalkerObjectInstance("TestSnake", "Position") {};
+	PyPosition(double x, double y) : PyPosition() {
+		X = x;
+		Y = y;
+	};
+	__GEN_PYTHON_VARIABLE(double, X)
+	__GEN_PYTHON_VARIABLE(double, Y)
+	__GEN_PYTHON_FUNCTION(double, pythag)
+};
+
+class TestPythonClass : public PyWalkerObjectInstance {
+public:
+	using PyWalkerObjectInstance::PyWalkerObjectInstance;
+	__GEN_PYTHON_VARIABLE(const char*, name)
+	__GEN_PYTHON_VARIABLE(std::string, birthplace)
+	__GEN_PYTHON_VARIABLE(long, length)
+	__GEN_PYTHON_VARIABLE(int, age)
+	__GEN_PYTHON_VARIABLE(double, terrariumWidth)
+	__GEN_PYTHON_VARIABLE(double, terrariumDepth)
+	__GEN_PYTHON_VARIABLE(float, terrariumHeight)
+	__GEN_PYTHON_VARIABLE(bool, isCool)
+	__GEN_PYTHON_VARIABLE(PyPosition, position)
+	__GEN_PYTHON_VARIABLE(std::vector<const char*>, friends)
+
+	__GEN_PYTHON_VARIABLE(int, fakeInt)
+
+	__GEN_PYTHON_FUNCTION(void, increaseAgeByOne)
+	__GEN_PYTHON_FUNCTION(void, issueFunction)
+	__GEN_PYTHON_FUNCTION(double, calculateTerrariumArea)
+	__GEN_PYTHON_FUNCTION(void, changeName, const char*, newName)
+	__GEN_PYTHON_FUNCTION(double, AddThreeParametersTogether, int, a, float, b, double, c)
+	__GEN_PYTHON_FUNCTION(double, AddNumbersTogether, std::vector<double>, numbers)
+	__GEN_PYTHON_FUNCTION(std::vector<const char *>, getFriends)
+	__GEN_PYTHON_FUNCTION(std::vector<int>, countToFive)
+	
+	__GEN_PYTHON_FUNCTION(int, getGlobalVar)
+	__GEN_PYTHON_FUNCTION(void, setGlobalVar, int, value)
+	__GEN_PYTHON_FUNCTION(void, fakeFunction)
+	__GEN_PYTHON_FUNCTION(void, noParamFunction, int, fakeParam)
+		__GEN_PYTHON_FUNCTION(void, printMessage, std::string, msg)
+};
+
+std::filesystem::path currentPath = std::filesystem::current_path();
+std::string currentPathString = currentPath.make_preferred().string();
+static PythonWalker pythonWalker = PythonWalker(std::vector<std::string>({
+		currentPathString + "\\..\\..\\UnitTests\\UnitTestsPythonScripts\\",
+		currentPathString
+	}));
+
+TestPythonClass testSnake;
+
+TEST_MODULE_INITIALIZE(ClassInitialize)
+{
+	testSnake = TestPythonClass("TestSnake", "TestSnake");
+}
+
+namespace PythonInterfaceTestCases
+{
+	TEST_CLASS(PythonModuleInterfaceTestClass)
+	{
+	public:
+		TEST_METHOD(LoadModule)
+		{
+			PyObject* module = PythonWalker::LoadModule("TestSnake");
+			Assert::IsNotNull(module);
+		}
+		TEST_METHOD(GetModuleVariable)
+		{
+			PyObject* module = PythonWalker::LoadModule("TestSnake");
+			int gloVal1=1, gloVal2=2;
+
+			PythonWalker::SetModuleGlobal<int>(module, "gloVal", gloVal1);
+			Assert::AreEqual(gloVal1, PythonWalker::GetModuleGlobal<int>(module,"gloVal"));
+
+			PythonWalker::SetModuleGlobal<int>(module, "gloVal", gloVal2);
+			Assert::AreEqual(gloVal2, PythonWalker::GetModuleGlobal<int>(module, "gloVal"));
+		}
+		/*
+		TEST_METHOD(RunModuleFunction)
+		{
+			// Would this even be useful?
+			Assert::IsTrue(true);
+		}
+		*/
+	};
+	TEST_CLASS(PythonObjectInterfaceTestClass)
+	{
+	public:
+		TEST_METHOD(InitializeObject)
+		{
+			TestPythonClass testSnakeSuccess = TestPythonClass("TestSnake", "TestSnake");
+			Assert::IsTrue(testSnakeSuccess.IsInitialized());
+		}
+		TEST_METHOD(InitializeObjectFromSubfolder)
+		{
+			TestPythonClass testSubfolderObject = TestPythonClass("Subfolder.TestOregano", "TestOregano");
+			Assert::IsTrue(testSubfolderObject.IsInitialized());
+		}
+		TEST_METHOD(GetAndSetVariables)
+		{
+			int age1 = 1, age2 = 2;
+			const char* name = "Ludwig";
+			std::string birthplace = "Alaska";
+			long length = 7;
+			bool isCool = true;
+
+			testSnake.age = age1;
+			Assert::AreEqual(age1, testSnake.age);
+			testSnake.age = age2;
+			Assert::AreEqual(age2, testSnake.age);
+
+			testSnake.name = name;
+			Assert::AreEqual(name, testSnake.name);
+
+			testSnake.birthplace = birthplace;
+			Assert::AreEqual(birthplace, testSnake.birthplace);
+
+			testSnake.length = length;
+			Assert::AreEqual(length, testSnake.length);
+
+			testSnake.isCool = false;
+			Assert::AreEqual(false, testSnake.isCool);
+
+			testSnake.isCool = true;
+			Assert::AreEqual(true, testSnake.isCool);
+		}
+		TEST_METHOD(FunctionSideEffects)
+		{
+			testSnake.age = 1;
+			testSnake.increaseAgeByOne();
+			Assert::AreEqual(2, testSnake.age);
+			testSnake.increaseAgeByOne();
+			Assert::AreEqual(3, testSnake.age);
+		}
+		TEST_METHOD(ReturnValueFromFunction)
+		{
+			double width = 5.0, depth = 3.0, height = 2.0;
+			double area = width * depth * height;
+			testSnake.terrariumWidth = width;
+			testSnake.terrariumDepth = depth;
+			testSnake.terrariumHeight = (float)height;
+			double pythonCalculatedArea = testSnake.calculateTerrariumArea();
+			Assert::AreEqual(area, pythonCalculatedArea);
+		}
+		TEST_METHOD(ObjectIndependence)
+		{
+			TestPythonClass testSnake1 = TestPythonClass("TestSnake", "TestSnake");
+			TestPythonClass testSnake2 = TestPythonClass("TestSnake", "TestSnake");
+			int age1 = 1, age2 = 2;
+			testSnake1.age = age1;
+			testSnake2.age = age2;
+			Assert::AreEqual(age1, testSnake1.age);
+			Assert::AreEqual(age2, testSnake2.age);
+			Assert::AreNotEqual(testSnake1.age, testSnake2.age);
+		}
+		TEST_METHOD(PassParametersIntoFunction)
+		{
+			const char* newName = "Ludwig";
+			testSnake.changeName(newName);
+			Assert::AreEqual(newName, testSnake.name);
+
+			int a = 1;
+			float b = 2.5;
+			double c = 3.14159;
+			double result = testSnake.AddThreeParametersTogether(a, b, c);
+			Assert::AreEqual(a + b + c, result);
+		}
+		TEST_METHOD(GlobalIsSharedBetweenClassInstances)
+		{
+			TestPythonClass testSnake1 = TestPythonClass("TestSnake", "TestSnake");
+			TestPythonClass testSnake2 = TestPythonClass("TestSnake", "TestSnake");
+			int gloVal1=1, gloVal2=2;
+
+			testSnake1.setGlobalVar(gloVal1);
+			Assert::AreEqual(gloVal1, testSnake1.getGlobalVar());
+			Assert::AreEqual(gloVal1, testSnake2.getGlobalVar());
+
+			testSnake2.setGlobalVar(gloVal2);
+			Assert::AreEqual(gloVal2, testSnake1.getGlobalVar());
+			Assert::AreEqual(gloVal2, testSnake2.getGlobalVar());
+		}
+		TEST_METHOD(GetAndSetNestedObject)
+		{
+			double x = 1, y = 2, x2 = 3.14, y2 = 4.28, x3 = 5.13, y3 = 6.789;
+			PyPosition pos;
+			pos.X = x;
+			pos.Y = y;
+			testSnake.position = pos;
+			Assert::AreEqual(x, testSnake.position.X);
+			Assert::AreEqual(y, testSnake.position.Y);
+
+			testSnake.position.X = x2;
+			testSnake.position.Y = y2;
+			Assert::AreEqual(x2, testSnake.position.X);
+			Assert::AreEqual(y2, testSnake.position.Y);
+
+			testSnake.position = PyPosition(x3, y3);
+			PyPosition tempPosition = testSnake.position;
+			Assert::AreEqual(x3, tempPosition.X);
+			Assert::AreEqual(y3, tempPosition.Y);
+		}
+		TEST_METHOD(NestedObjectMethod)
+		{
+			double x = 1, y = 2;
+			testSnake.position = PyPosition(x, y);
+			double pythag = sqrt(x*x + y*y);
+			double result = testSnake.position.pythag();
+			Assert::AreEqual(pythag, result);
+		}
+		TEST_METHOD(ListAsObjectVariable)
+		{
+			std::vector<const char*> friends = std::vector<const char*>{
+				"Jake", "Sam"
+			};
+			testSnake.friends = friends;
+			bool areEqual = true;
+			for (int i = 0; i < friends.size(); i++) {
+				areEqual &= (strcmp(friends[i], testSnake.friends[i]) == 0);
+			}
+			Assert::IsTrue(areEqual);
+		}
+		TEST_METHOD(ListAsParameter)
+		{
+			std::vector<double> numbers = std::vector<double>{
+				1, 2, 4, 8, 16
+			};
+			double sum = 0;
+			for (double i : numbers) sum += i;
+			double result = testSnake.AddNumbersTogether(numbers);
+			Assert::AreEqual(sum, result);
+		}
+		TEST_METHOD(ListAsReturnValue)
+		{
+			std::vector<int> countToFive = std::vector<int>{
+				1, 2, 3, 4, 5
+			};
+			std::vector<int> result = testSnake.countToFive();
+			bool areEqual = true;
+			for (int i = 0; i < countToFive.size(); i++) {
+				areEqual &= (countToFive[i] == result[i]);
+			}
+			Assert::IsTrue(areEqual);
+		}
+	};
+	TEST_CLASS(PythonInterfaceExceptionTestClass)
+	{
+	public:
+		TEST_METHOD(FakeVariableException)
+		{
+			auto func = [] {testSnake.fakeInt = 1; };
+			Assert::ExpectException<PythonAttributeDNE>(func);
+		}
+		TEST_METHOD(FakeFunctionException)
+		{
+			auto func = [] {testSnake.fakeFunction(); };
+			Assert::ExpectException<PythonMethodDNE>(func);
+		}
+		TEST_METHOD(FakeFunctionParametersException)
+		{
+			auto func = [] {testSnake.noParamFunction(4); };
+			Assert::ExpectException<PythonMethodError>(func);
+		}
+		TEST_METHOD(FunctionIssue)
+		{
+			auto func = [] {testSnake.issueFunction(); };
+			Assert::ExpectException<PythonMethodError>(func);
+		}
+		TEST_METHOD(ModuleDNE)
+		{
+			auto func = [] {TestPythonClass fakeModuleSnake = TestPythonClass("FakeModule", "TestSnake"); };
+			Assert::ExpectException<PythonModuleDNE>(func);
+		}
+		TEST_METHOD(ModuleNotInitialized)
+		{
+			auto func = [] {PythonWalker::CreateObject(nullptr, "TestSnake"); };
+			Assert::ExpectException<PythonModuleNotInitialized>(func);
+		}
+		TEST_METHOD(ObjectDNE)
+		{
+			auto func = [] {TestPythonClass throwAway = TestPythonClass("TestSnake", "FakeName"); };
+			Assert::ExpectException<PythonObjectDNE>(func);
+		}
+	};
+}
+namespace PythonFileTestCases
+{
+	PythonClassDefinition PlantDefinition = PythonClassDefinition("TestPlant", "TestPlant");
+	PythonClassDefinition DuplicatePlantDefinition = PythonClassDefinition("TestBasil", "TestPlant");
+	PythonClassDefinition BasilDefinition = PythonClassDefinition("TestBasil", "TestBasil");
+	PythonClassDefinition ThaiBasilDefinition = PythonClassDefinition("TestThaiBasil", "TestThaiBasil");
+	PythonClassDefinition CatDefinition = PythonClassDefinition("TestPet", "TestCat");
+	PythonClassDefinition DogDefinition = PythonClassDefinition("TestPet", "TestDog");
+	PythonClassDefinition OreganoDefinition = PythonClassDefinition("Subfolder.TestOregano", "TestOregano");
+	PythonClassDefinition MexicanOreganoDefinition = PythonClassDefinition("Subfolder.TestMexicanOregano", "TestMexicanOregano");
+	PythonClassDefinition OreganoDefinitionWithoutSubfolder = PythonClassDefinition("TestOregano", "TestOregano");
+	PythonClassDefinition RosemaryDefinition = PythonClassDefinition("Subfolder.Subfolder2.TestRosemary", "TestRosemary");
+
+	PythonClassDefinition MushroomDefinition = PythonClassDefinition("Subfolder.TestMushroom", "TestMushroom");
+	PythonClassDefinition OysterMushroomDefinition = PythonClassDefinition("TestOysterMushroom", "TestOysterMushroom");
+	std::string NonExistantClassName = "NonExistantClassName";
+	TEST_CLASS(PythonFileManagementTestClass)
+	{
+	public:
+		TEST_METHOD(FindClasses)
+		{
+			std::vector<PythonClassDefinition> scripts = pythonWalker.GetScripts();
+			Assert::IsTrue(VectorContains<PythonClassDefinition>(scripts, BasilDefinition));
+		}
+		TEST_METHOD(FindClassesNoDups)
+		{
+			std::vector<PythonClassDefinition> scripts = pythonWalker.GetScripts();
+			Assert::IsTrue(VectorContains<PythonClassDefinition>(scripts, PlantDefinition));
+			Assert::IsFalse(VectorContains<PythonClassDefinition>(scripts, DuplicatePlantDefinition));
+		}
+		TEST_METHOD(FindTwoClassesInOneModule)
+		{
+			std::vector<PythonClassDefinition> scripts = pythonWalker.GetScripts();
+			Assert::IsTrue(VectorContains<PythonClassDefinition>(scripts, CatDefinition));
+			Assert::IsTrue(VectorContains<PythonClassDefinition>(scripts, DogDefinition));
+		}
+		TEST_METHOD(FindClassesRecursive)
+		{
+			std::vector<PythonClassDefinition> scripts = pythonWalker.GetScripts(true);
+			Assert::IsTrue(VectorContains<PythonClassDefinition>(scripts, BasilDefinition));
+			Assert::IsTrue(VectorContains<PythonClassDefinition>(scripts, OreganoDefinition));
+			Assert::IsTrue(VectorContains<PythonClassDefinition>(scripts, RosemaryDefinition));
+
+			scripts = pythonWalker.GetScripts(false);
+			Assert::IsTrue(VectorContains<PythonClassDefinition>(scripts, BasilDefinition));
+			Assert::IsFalse(VectorContains<PythonClassDefinition>(scripts, OreganoDefinition));
+			Assert::IsFalse(VectorContains<PythonClassDefinition>(scripts, RosemaryDefinition));
+		}
+		TEST_METHOD(RecursiveClassIncludesFullModule)
+		{
+			std::vector<PythonClassDefinition> scripts = pythonWalker.GetScripts(true);
+			Assert::IsTrue(VectorContains<PythonClassDefinition>(scripts, OreganoDefinition));
+			Assert::IsFalse(VectorContains<PythonClassDefinition>(scripts, OreganoDefinitionWithoutSubfolder));
+		}
+		TEST_METHOD(FindDerivedClasses)
+		{
+			std::vector<PythonClassDefinition> scripts = pythonWalker.GetScripts(false, PlantDefinition.ClassName);
+			Assert::IsTrue(VectorContains<PythonClassDefinition>(scripts, BasilDefinition));
+			Assert::IsFalse(VectorContains<PythonClassDefinition>(scripts, CatDefinition));
+
+			scripts = pythonWalker.GetScripts(false, NonExistantClassName);
+			Assert::IsTrue(scripts.empty());
+		}
+		TEST_METHOD(FindDerivedClassesWithBaseInSubfolder)
+		{
+			std::vector<PythonClassDefinition> scripts = pythonWalker.GetScripts(true, OreganoDefinition.ClassName);
+			Assert::IsTrue(VectorContains<PythonClassDefinition>(scripts, MexicanOreganoDefinition));
+		}
+		TEST_METHOD(ExcludeBaseClassWhenSearchingForDerivedClasses)
+		{
+			std::vector<PythonClassDefinition> scripts = pythonWalker.GetScripts(false, PlantDefinition.ClassName);
+			Assert::IsFalse(VectorContains<PythonClassDefinition>(scripts, PlantDefinition));
+		}
+		TEST_METHOD(FindIndirectDerrivedClasses)
+		{
+			std::vector<PythonClassDefinition> scripts = pythonWalker.GetScripts(false, PlantDefinition.ClassName);
+			Assert::IsTrue(VectorContains<PythonClassDefinition>(scripts, ThaiBasilDefinition));
+		}
+		TEST_METHOD(ExcludeModule)
+		{
+			std::vector<std::string> excludedModules = {
+				"Subfolder"
+			};
+			std::vector<PythonClassDefinition> scripts = pythonWalker.GetScripts(true, "", excludedModules);
+			Assert::IsFalse(VectorContains<PythonClassDefinition>(scripts, MushroomDefinition));
+			Assert::IsTrue(VectorContains<PythonClassDefinition>(scripts, OysterMushroomDefinition));
+		}
+		TEST_METHOD(DeriveFromExcludedModuleClass)
+		{
+			std::vector<std::string> excludedModules = {
+				"Subfolder"
+			};
+			std::vector<PythonClassDefinition> scripts = pythonWalker.GetScripts(true, MushroomDefinition.ClassName, excludedModules);
+			Assert::IsFalse(VectorContains<PythonClassDefinition>(scripts, MushroomDefinition));
+			Assert::IsTrue(VectorContains<PythonClassDefinition>(scripts, OysterMushroomDefinition));
+			Assert::IsFalse(VectorContains<PythonClassDefinition>(scripts, BasilDefinition));
+		}
+	};
+}
+
+namespace PythonCodeGenerationTestCases
+{
+	TEST_CLASS(PythonCodeGenerationTestClass)
+	{
+	public:
+		TEST_METHOD_CLEANUP(CleanupCodeGenMethod)
+		{
+			PythonCodeGeneration::DeletePythonModule(currentPath, "GeneratedFiles", true);
+		}
+		PythonClassDefinition RobotDefinition = PythonClassDefinition("GeneratedFiles.Robot", "Robot");
+		PythonClassDefinition RobotTwoDefinition = PythonClassDefinition("GeneratedFiles.Robot", "RobotTwo");
+		TEST_METHOD(GenerateModuleAndClass)
+		{
+			PythonCodeGeneration::GeneratePythonClass(currentPath, RobotDefinition, RobotCodeString);
+			std::vector<PythonClassDefinition> scripts = pythonWalker.GetScripts(true);
+			Assert::IsTrue(VectorContains<PythonClassDefinition>(scripts, RobotDefinition));
+		}
+		TEST_METHOD(DeleteScriptModule)
+		{
+			PythonCodeGeneration::GeneratePythonClass(currentPath, RobotDefinition, RobotCodeString);
+			std::vector<PythonClassDefinition> scripts = pythonWalker.GetScripts(true);
+			Assert::IsTrue(VectorContains<PythonClassDefinition>(scripts, RobotDefinition));
+
+			PythonCodeGeneration::DeletePythonModule(currentPath, RobotDefinition);
+
+			scripts = pythonWalker.GetScripts(true);
+			Assert::IsFalse(VectorContains<PythonClassDefinition>(scripts, RobotDefinition));
+		}
+		TEST_METHOD(DeleteDirectoryModule)
+		{
+			PythonCodeGeneration::GeneratePythonClass(currentPath, RobotDefinition, RobotCodeString);
+			std::vector<PythonClassDefinition> scripts = pythonWalker.GetScripts(true);
+			Assert::IsTrue(VectorContains<PythonClassDefinition>(scripts, RobotDefinition));
+
+			PythonCodeGeneration::DeletePythonModule(currentPath, "GeneratedFiles", true);
+
+			scripts = pythonWalker.GetScripts(true);
+			Assert::IsFalse(VectorContains<PythonClassDefinition>(scripts, RobotDefinition));
+		}
+		TEST_METHOD(ModuleKilledWhenDeleted)
+		{
+			PythonCodeGeneration::GeneratePythonClass(currentPath, RobotDefinition, RobotCodeString);
+			std::vector<PythonClassDefinition> scripts = pythonWalker.GetScripts(true);
+			Assert::IsTrue(VectorContains<PythonClassDefinition>(scripts, RobotDefinition));
+
+			PythonCodeGeneration::DeletePythonModule(currentPath, RobotDefinition);
+
+			scripts = pythonWalker.GetScripts(true);
+			Assert::IsFalse(VectorContains<PythonClassDefinition>(scripts, RobotDefinition));
+		}
+		/*
+		TEST_METHOD(ModuleResetWhenUpdated)
+		{
+			PythonCodeGeneration::GeneratePythonClass(currentPath, RobotDefinition, RobotCodeString);
+			std::vector<PythonClassDefinition> scripts = pythonWalker.GetScripts(true);
+			Assert::IsTrue(VectorContains<PythonClassDefinition>(scripts, RobotDefinition));
+
+			// Doesn't appear to be a good way to remove module items during runtime, only add.
+			//   Robot two string, which hasn't been added yet in this case, carries over from past runs.
+			//Assert::IsFalse(VectorContains<PythonClassDefinition>(scripts, RobotTwoDefinition));
+
+			PythonCodeGeneration::GeneratePythonClass(currentPath, RobotTwoDefinition, RobotTwoCodeString);
+			scripts = pythonWalker.GetScripts(true);
+			Assert::IsTrue(VectorContains<PythonClassDefinition>(scripts, RobotDefinition));
+			Assert::IsTrue(VectorContains<PythonClassDefinition>(scripts, RobotTwoDefinition));
+		}
+		*/
+		TEST_METHOD(GenerateModuleAndTwoClasses)
+		{
+			PythonCodeGeneration::GeneratePythonClass(currentPath, RobotDefinition, RobotCodeString);
+			PythonCodeGeneration::GeneratePythonClass(currentPath, RobotTwoDefinition, RobotTwoCodeString);
+			std::vector<PythonClassDefinition> scripts = pythonWalker.GetScripts(true);
+			Assert::IsTrue(VectorContains<PythonClassDefinition>(scripts, RobotDefinition));
+			Assert::IsTrue(VectorContains<PythonClassDefinition>(scripts, RobotTwoDefinition));
+		}
+	};
+}
+
+namespace PythonLoggingTestCases
+{
+	TEST_CLASS(PythonLoggingTestClass)
+	{
+	public:
+		std::filesystem::path LogDirectory = currentPath.append("Logs");
+		TEST_METHOD(LogToFile)
+		{
+			std::filesystem::path logFilePath = LogDirectory / "LogFile.txt";
+			PythonLogging::StartLoggingContext(logFilePath);
+			std::string message = "my unit testing message";
+			testSnake.printMessage(message);
+			PythonLogging::FlushLoggingContext();
+
+			std::string fileResults;
+			std::ifstream logFile(logFilePath.string().c_str());
+			std::getline(logFile, fileResults);
+			logFile.close();
+
+			Assert::AreEqual(message, fileResults);
+
+			PythonLogging::CloseLoggingContext();
+			PythonFileManagement::ClearDirectory(LogDirectory);
+		}
+		// TODO support logging that doesn't reset every time we start logging to that file
+		// TODO test logging python error exception
+		// TODO make a library function that compares the contents of a file to string.
+		//   Useful for checking if a generated file has been changed and needs to be regenerated
+		//		Also for testing code generation and logging messages
+	};
+}
