@@ -8,9 +8,20 @@ PythonClassDefinition::PythonClassDefinition(const char* module, const char* cla
 	: Module(module), ClassName(className)
 {
 }
+PythonClassDefinition::PythonClassDefinition(PyObject* pyObject)
+{
+    Module = PyUnicode_AsUTF8(PyObject_GetAttrString(pyObject, "__module__"));
+    PyObject* pyClass = PyObject_GetAttrString(pyObject, "__class__");
+    ClassName = PyUnicode_AsUTF8(PyObject_GetAttrString(pyClass, "__name__"));
+}
 PyObject* PythonClassDefinition::GetPythonClass() const
 {
 	return PythonWalker::GetPythonClass(Module.c_str(), ClassName.c_str());
+}
+PyObject* PythonClassDefinition::GetNewObject() const
+{
+    PyObject* pModule = PythonWalker::LoadModule(Module);
+    return PythonWalker::CreateObject(pModule, ClassName.c_str());
 }
 bool PythonClassDefinition::IsValid() const
 {

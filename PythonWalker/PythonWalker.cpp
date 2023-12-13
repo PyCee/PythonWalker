@@ -178,9 +178,8 @@ std::vector<PythonClassDefinition> PythonWalker::GetClassDefinitionsFromModuleDi
 
 bool PythonWalker::MatchesModule(PyObject* pObject, const char* moduleName)
 {
-    PyObject* moduleAttribute = PyObject_GetAttrString(pObject, "__module__");
-    const char* tempModuleAttribute = PyUnicode_AsUTF8(moduleAttribute);
-    return strcmp(moduleName, tempModuleAttribute) == 0;
+    PythonClassDefinition def(pObject);
+    return strcmp(moduleName, def.Module.c_str()) == 0;
 }
 
 PyObject* PythonWalker::CreateObject(PyObject* pModule, const char* className)
@@ -199,6 +198,20 @@ PyObject* PythonWalker::CreateObject(PyObject* pModule, const char* className)
         return nullptr;
     }
     return pythonClassInstance;
+}
+
+void PythonWalker::CopyPyObjectValues(PyObject* src, PyObject* dest)
+{
+    PyObject* dict = PyObject_GetAttrString(src, "__dict__");
+    PyObject* pKey, * value = NULL;
+    Py_ssize_t pos = 0;
+
+    while (PyDict_Next(dict, &pos, &pKey, &value)) {
+        const char* name = GetValueFromPyObject<const char*>(pKey);
+        float val = GetValueFromPyObject<float>(value);
+        PyObject_SetAttr(dest, pKey, value);
+        //TODO does this handle complex objects?
+    }
 }
 
 

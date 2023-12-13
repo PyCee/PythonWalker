@@ -8,6 +8,7 @@ class PythonClassDefinition
 public:
 	PythonClassDefinition();
 	PythonClassDefinition(const char* module, const char* className);
+	PythonClassDefinition(PyObject* pyObject);
 
 	bool operator == (PythonClassDefinition& def) const
 	{
@@ -16,6 +17,7 @@ public:
 	std::string Module;
 	std::string ClassName;
 	PyObject* GetPythonClass() const;
+	PyObject* GetNewObject() const;
 	bool IsValid() const;
 	bool IncludesModule(std::string moduleName);
 	static std::vector<PythonClassDefinition> FilterOutModule(std::string moduleName, std::vector<PythonClassDefinition> defs);

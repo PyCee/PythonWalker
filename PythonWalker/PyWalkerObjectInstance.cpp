@@ -3,27 +3,29 @@
 
 PyWalkerObjectInstance::PyWalkerObjectInstance()
 {
-	ModuleName = "";
-	ClassName = "";
 	PyObjectInstance = nullptr;
 }
 PyWalkerObjectInstance::PyWalkerObjectInstance(const char* moduleName, const char* className)
 {
-	ModuleName = moduleName;
-	ClassName = className;
 	if (strlen(moduleName) == 0 || strlen(className) == 0) {
 		PyObjectInstance = nullptr;
 		return;
 	}
-	PyObject* pyModule = PythonWalker::LoadModule(moduleName);
-	PyObjectInstance = PythonWalker::CreateObject(pyModule, className);
+	ClassDef = PythonClassDefinition(moduleName, className);
+	PyObjectInstance = ClassDef.GetNewObject();
 }
 PyWalkerObjectInstance::PyWalkerObjectInstance(PyObject* pyObject) : PyWalkerObjectInstance() {
-	PyObjectInstance = pyObject;
+	ClassDef = PythonClassDefinition(pyObject);
+	PyObjectInstance = ClassDef.GetNewObject();
+	PythonWalker::CopyPyObjectValues(pyObject, PyObjectInstance);
 }
-PyWalkerObjectInstance::~PyWalkerObjectInstance()
-{
+PyWalkerObjectInstance::~PyWalkerObjectInstance() {}
 
+void PyWalkerObjectInstance::RegenerateFromScript()
+{
+	PyObject* regenPyObject = PyObjectInstance;
+	PyObjectInstance = ClassDef.GetNewObject();
+	PythonWalker::CopyPyObjectValues(regenPyObject, PyObjectInstance);
 }
 PyObject* PyWalkerObjectInstance::ExecuteFunctionInternal(const char* functionName, PyObject* keywords)
 {

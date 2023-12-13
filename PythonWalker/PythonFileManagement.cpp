@@ -45,6 +45,18 @@ std::ofstream PythonFileManagement::CreateFile(std::filesystem::path path, bool 
     }
     return newFile;
 }
+void PythonFileManagement::ClearFile(std::filesystem::path path)
+{
+    std::ofstream newFile(path.string());
+    newFile.close();
+}
+std::string PythonFileManagement::GetFileContents(std::filesystem::path filePath)
+{
+    std::ifstream file(filePath.string());
+    std::stringstream buffer;
+    buffer << file.rdbuf();
+    return buffer.str();
+}
 void PythonFileManagement::ClearDirectory(std::filesystem::path directory)
 {
     for (const auto& entry : std::filesystem::directory_iterator(directory))
@@ -52,3 +64,4 @@ void PythonFileManagement::ClearDirectory(std::filesystem::path directory)
         std::filesystem::remove_all(entry.path());
     }
 }
+

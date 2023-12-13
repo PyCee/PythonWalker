@@ -7,8 +7,8 @@
 class TestPyClass : public PyWalkerObjectInstance {
 public:
     using PyWalkerObjectInstance::PyWalkerObjectInstance;
-    __GEN_PYTHON_FUNCTION(void, logMessage, std::string, msg)
-        __GEN_PYTHON_FUNCTION(void, issueFunction)
+    __PYW_TYPING_METHOD(void, logMessage, std::string, msg)
+        __PYW_TYPING_METHOD(void, issueFunction)
 };
 
 //https://w3.pppl.gov/~hammett/comp/python/LLNLDistribution11/CXX/Doc/cxx.htm
@@ -28,17 +28,15 @@ int main()
         });
     PythonWalker pw = PythonWalker(paths);
 
-    std::vector<PythonClassDefinition>test = pw.GetScripts();
+    std::vector<PythonClassDefinition> test = pw.GetScripts();
     TestPyClass testSnake = TestPyClass("TestSnake", "TestSnake");
 
+    testSnake.RegenerateFromScript();
 
     //TODO better handling python errors
-    //  1. Logging
+    //  1. Logging - Done
     //  2. Replaying back with object and environment variables set for debugging in user environment
     //      Would have to generate a script that the user can use to step through an issue
-    // 
-    //TODO detect if generated file is different from generation (ie. if it has been changed)
-    //  maybe function to see if generation differs from source code, and function to reset it
     // 
     //TODO Maybe support standalone module functions
     //  Not super important, but feels like I might as well

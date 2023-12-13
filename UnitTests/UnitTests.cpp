@@ -11,11 +11,19 @@ using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 //https://learn.microsoft.com/en-us/visualstudio/test/writing-unit-tests-for-c-cpp?view=vs-2022
 
-
 template <typename T>
 bool VectorContains(std::vector<T> vec, T val)
 {
 	return std::find(vec.begin(), vec.end(), val) != vec.end();
+}
+bool VectorContains(std::vector<const char *> vec, const char* val)
+{
+	for(const char* vectorValue : vec) {
+		if (strcmp(vectorValue, val) == 0) {
+			return true;
+		}
+	}
+	return false;
 }
 class PyPosition : public PyWalkerObjectInstance {
 public:
@@ -25,41 +33,52 @@ public:
 		X = x;
 		Y = y;
 	};
-	__GEN_PYTHON_VARIABLE(double, X)
-	__GEN_PYTHON_VARIABLE(double, Y)
-	__GEN_PYTHON_FUNCTION(double, pythag)
+	__PYW_TYPING_VAR(double, X)
+	__PYW_TYPING_VAR(double, Y)
+	__PYW_TYPING_METHOD(double, pythag)
 };
 
 class TestPythonClass : public PyWalkerObjectInstance {
 public:
 	using PyWalkerObjectInstance::PyWalkerObjectInstance;
-	__GEN_PYTHON_VARIABLE(const char*, name)
-	__GEN_PYTHON_VARIABLE(std::string, birthplace)
-	__GEN_PYTHON_VARIABLE(long, length)
-	__GEN_PYTHON_VARIABLE(int, age)
-	__GEN_PYTHON_VARIABLE(double, terrariumWidth)
-	__GEN_PYTHON_VARIABLE(double, terrariumDepth)
-	__GEN_PYTHON_VARIABLE(float, terrariumHeight)
-	__GEN_PYTHON_VARIABLE(bool, isCool)
-	__GEN_PYTHON_VARIABLE(PyPosition, position)
-	__GEN_PYTHON_VARIABLE(std::vector<const char*>, friends)
 
-	__GEN_PYTHON_VARIABLE(int, fakeInt)
+	__PYW_TYPING_VAR(const char*, name)
+	__PYW_TYPING_VAR(std::string, birthplace)
+	__PYW_TYPING_VAR(long, length)
+	__PYW_TYPING_VAR(int, age)
+	__PYW_TYPING_VAR(double, terrariumWidth)
+	__PYW_TYPING_VAR(double, terrariumDepth)
+	__PYW_TYPING_VAR(float, terrariumHeight)
+	__PYW_TYPING_VAR(bool, isCool)
+		__PYW_TYPING_VAR(PyPosition, position)
+		__PYW_TYPING_VAR(std::vector<const char*>, friends)
 
-	__GEN_PYTHON_FUNCTION(void, increaseAgeByOne)
-	__GEN_PYTHON_FUNCTION(void, issueFunction)
-	__GEN_PYTHON_FUNCTION(double, calculateTerrariumArea)
-	__GEN_PYTHON_FUNCTION(void, changeName, const char*, newName)
-	__GEN_PYTHON_FUNCTION(double, AddThreeParametersTogether, int, a, float, b, double, c)
-	__GEN_PYTHON_FUNCTION(double, AddNumbersTogether, std::vector<double>, numbers)
-	__GEN_PYTHON_FUNCTION(std::vector<const char *>, getFriends)
-	__GEN_PYTHON_FUNCTION(std::vector<int>, countToFive)
+
+	__PYW_TYPING_VAR(int, fakeInt)
+
+	__PYW_TYPING_METHOD(void, increaseAgeByOne)
+	__PYW_TYPING_METHOD(void, issueFunction)
+	__PYW_TYPING_METHOD(double, calculateTerrariumArea)
+	__PYW_TYPING_METHOD(void, changeName, const char*, newName)
+	__PYW_TYPING_METHOD(double, AddThreeParametersTogether, int, a, float, b, double, c)
+	__PYW_TYPING_METHOD(double, AddNumbersTogether, std::vector<double>, numbers)
+	__PYW_TYPING_METHOD(std::vector<const char *>, getFriends)
+	__PYW_TYPING_METHOD(std::vector<int>, countToFive)
 	
-	__GEN_PYTHON_FUNCTION(int, getGlobalVar)
-	__GEN_PYTHON_FUNCTION(void, setGlobalVar, int, value)
-	__GEN_PYTHON_FUNCTION(void, fakeFunction)
-	__GEN_PYTHON_FUNCTION(void, noParamFunction, int, fakeParam)
-		__GEN_PYTHON_FUNCTION(void, printMessage, std::string, msg)
+	__PYW_TYPING_METHOD(int, getGlobalVar)
+	__PYW_TYPING_METHOD(void, setGlobalVar, int, value)
+	__PYW_TYPING_METHOD(void, fakeFunction)
+	__PYW_TYPING_METHOD(void, noParamFunction, int, fakeParam)
+	__PYW_TYPING_METHOD(void, printMessage, std::string, msg)
+	__PYW_TYPING_METHOD(double, GetPositionXIndirectly)
+};
+class TestRobotClass : public PyWalkerObjectInstance {
+public:
+	using PyWalkerObjectInstance::PyWalkerObjectInstance;
+
+	TestRobotClass() : PyWalkerObjectInstance("GeneratedFiles.Robot", "Robot") {};
+	__PYW_TYPING_VAR(int, age)
+	__PYW_TYPING_METHOD(float, divide, float, dividend, float, divisor)
 };
 
 std::filesystem::path currentPath = std::filesystem::current_path();
@@ -171,8 +190,8 @@ namespace PythonInterfaceTestCases
 			int age1 = 1, age2 = 2;
 			testSnake1.age = age1;
 			testSnake2.age = age2;
-			Assert::AreEqual(age1, testSnake1.age);
-			Assert::AreEqual(age2, testSnake2.age);
+			Assert::AreEqual(age1, (int)testSnake1.age);
+			Assert::AreEqual(age2, (int)testSnake2.age);
 			Assert::AreNotEqual(testSnake1.age, testSnake2.age);
 		}
 		TEST_METHOD(PassParametersIntoFunction)
@@ -203,23 +222,37 @@ namespace PythonInterfaceTestCases
 		}
 		TEST_METHOD(GetAndSetNestedObject)
 		{
-			double x = 1, y = 2, x2 = 3.14, y2 = 4.28, x3 = 5.13, y3 = 6.789;
-			PyPosition pos;
-			pos.X = x;
-			pos.Y = y;
+			double x = 1, y = 2;
+			PyPosition pos(x, y);
 			testSnake.position = pos;
 			Assert::AreEqual(x, testSnake.position.X);
 			Assert::AreEqual(y, testSnake.position.Y);
+		}
+		TEST_METHOD(SetNestedObjectPropagatesToPyObject)
+		{
+			double x = 1, y = 2;
+			PyPosition pos(x, y);
+			testSnake.position = pos;
+			Assert::AreEqual(x, testSnake.GetPositionXIndirectly());
 
-			testSnake.position.X = x2;
-			testSnake.position.Y = y2;
-			Assert::AreEqual(x2, testSnake.position.X);
-			Assert::AreEqual(y2, testSnake.position.Y);
+			pos.X = 0.5;
+			Assert::AreNotEqual(pos.X, testSnake.GetPositionXIndirectly());
+		}
+		TEST_METHOD(IndirectObjectIndependence)
+		{
+			double x = 1, y = 2, x2 = 3.14;
+			PyPosition pos(x, y);
+			testSnake.position = pos;
 
-			testSnake.position = PyPosition(x3, y3);
-			PyPosition tempPosition = testSnake.position;
-			Assert::AreEqual(x3, tempPosition.X);
-			Assert::AreEqual(y3, tempPosition.Y);
+			pos.X = x2;
+			Assert::AreNotEqual(pos.X, testSnake.GetPositionXIndirectly());
+		}
+		TEST_METHOD(NestedObjectAssignmentKeepVariables)
+		{
+			double x = 1, y = 2;
+			testSnake.position = PyPosition(x, y);
+			Assert::AreEqual(testSnake.position.X, x);
+			Assert::AreEqual(testSnake.position.Y, y);
 		}
 		TEST_METHOD(NestedObjectMethod)
 		{
@@ -229,17 +262,69 @@ namespace PythonInterfaceTestCases
 			double result = testSnake.position.pythag();
 			Assert::AreEqual(pythag, result);
 		}
+		TEST_METHOD(KeepClassDefThroughAssignment)
+		{
+			double x = 1, y = 2;
+			PyPosition pos(x, y);
+			testSnake.position = pos;
+
+			Assert::AreEqual(pos.ClassDef.ClassName, testSnake.position.ClassDef.ClassName,
+				L"ClassName not kept through assignment");
+			Assert::AreEqual(pos.ClassDef.Module, testSnake.position.ClassDef.Module,
+				L"Module not kept through assignment");
+		}
+		TEST_METHOD(ObjectIndependenceAfterAssignment)
+		{
+			double x = 1, y = 2, x2 = 3.14, y2 = 4.28;
+			PyPosition pos(x, y);
+			testSnake.position = pos;
+
+			pos.X = x2;
+			pos.Y = y2;
+
+			Assert::AreNotEqual(pos.X, testSnake.position.X);
+			Assert::AreNotEqual(pos.Y, testSnake.position.Y);
+		}
+		TEST_METHOD(GetClassDefinitionFromPyObject)
+		{
+			PyPosition pos;
+			PythonClassDefinition def(pos.PyObjectInstance);
+			Assert::AreEqual(pos.ClassDef.Module, def.Module);
+			Assert::AreEqual(pos.ClassDef.ClassName, def.ClassName);
+		}
 		TEST_METHOD(ListAsObjectVariable)
 		{
 			std::vector<const char*> friends = std::vector<const char*>{
 				"Jake", "Sam"
 			};
 			testSnake.friends = friends;
-			bool areEqual = true;
+
 			for (int i = 0; i < friends.size(); i++) {
-				areEqual &= (strcmp(friends[i], testSnake.friends[i]) == 0);
+				Assert::IsTrue(VectorContains(friends, testSnake.friends[i]));
 			}
-			Assert::IsTrue(areEqual);
+		}
+		TEST_METHOD(ListElementCanBeChanged)
+		{
+			const char* newFriend = "Hector";
+			const char* notSnakeFriend = "Ethan";
+			testSnake.friends = std::vector<const char*>{
+				"Jake", "Sam", notSnakeFriend
+			};
+
+			// Right now this runs the getter on friends, accesses the element const char *, and sets that.
+			testSnake.friends[2] = newFriend;
+
+			//TODO I thought ampersand on the getter return value fixed it, but now it reverts soon after...
+			// Ampersand makes it set _friends, but not in python.
+			//	 Setting _friends directly, not through setter
+			//   Thus _friends is reset when we get it from python.
+			// 
+			// Ampersand is giving reference to underlying variable
+			//		Probably need to do wrapper rather than props
+			testSnake.Reload_friends();
+
+			Assert::IsTrue(VectorContains(testSnake.friends, newFriend));
+			Assert::IsTrue(!VectorContains(testSnake.friends, notSnakeFriend));
 		}
 		TEST_METHOD(ListAsParameter)
 		{
@@ -257,11 +342,9 @@ namespace PythonInterfaceTestCases
 				1, 2, 3, 4, 5
 			};
 			std::vector<int> result = testSnake.countToFive();
-			bool areEqual = true;
 			for (int i = 0; i < countToFive.size(); i++) {
-				areEqual &= (countToFive[i] == result[i]);
+				Assert::AreEqual(countToFive[i], result[i]);
 			}
-			Assert::IsTrue(areEqual);
 		}
 	};
 	TEST_CLASS(PythonInterfaceExceptionTestClass)
@@ -420,6 +503,9 @@ namespace PythonCodeGenerationTestCases
 			PythonCodeGeneration::GeneratePythonClass(currentPath, RobotDefinition, RobotCodeString);
 			std::vector<PythonClassDefinition> scripts = pythonWalker.GetScripts(true);
 			Assert::IsTrue(VectorContains<PythonClassDefinition>(scripts, RobotDefinition));
+
+			std::string result = PythonFileManagement::GetFileContents(currentPath / "GeneratedFiles\\Robot.py");
+			Assert::AreEqual(RobotCodeString, result);
 		}
 		TEST_METHOD(DeleteScriptModule)
 		{
@@ -478,6 +564,54 @@ namespace PythonCodeGenerationTestCases
 			std::vector<PythonClassDefinition> scripts = pythonWalker.GetScripts(true);
 			Assert::IsTrue(VectorContains<PythonClassDefinition>(scripts, RobotDefinition));
 			Assert::IsTrue(VectorContains<PythonClassDefinition>(scripts, RobotTwoDefinition));
+
+			std::string result = PythonFileManagement::GetFileContents(currentPath / "GeneratedFiles\\Robot.py");
+			Assert::AreEqual(RobotCodeString + RobotTwoCodeString, result);
+		}
+		TEST_METHOD(RegenerateClassWithChange)
+		{
+			PythonCodeGeneration::GeneratePythonClass(currentPath, "GeneratedFiles.Robot", RobotCodeWithZeroErrorString);
+			TestRobotClass robot = TestRobotClass("GeneratedFiles.Robot", "Robot");
+			float expected, result;
+
+			auto func = [&] {robot.divide(1.0, 0.0); };
+			Assert::ExpectException<PythonMethodError>(func);
+			
+			PythonCodeGeneration::GeneratePythonClass(currentPath, "GeneratedFiles.Robot", RobotCodeWithZeroErrorFixedString);
+
+			robot.RegenerateFromScript();
+
+			expected = 0.0;
+			result = robot.divide(1.0, 0.0);
+			Assert::AreEqual(expected, result);
+		}
+		TEST_METHOD(RegenAfterReassignment)
+		{
+			PythonCodeGeneration::GeneratePythonClass(currentPath, "GeneratedFiles.Robot", RobotCodeWithZeroErrorString);
+			TestRobotClass robot = TestRobotClass("GeneratedFiles.Robot", "Robot");
+			TestRobotClass robot2 = TestRobotClass("GeneratedFiles.Robot", "Robot");
+			int expected = 10;
+
+			robot2.age = expected;
+			robot = robot2;
+			Assert::AreEqual(expected, robot.age);
+
+			robot.RegenerateFromScript();
+
+		}
+		TEST_METHOD(KeepVariableValueThroughRegeneration)
+		{
+			PythonCodeGeneration::GeneratePythonClass(currentPath, "GeneratedFiles.Robot", RobotCodeWithZeroErrorString);
+			TestRobotClass robot = TestRobotClass("GeneratedFiles.Robot", "Robot");
+			int expected = 10;
+			robot.age = expected;
+			Assert::AreEqual(expected, robot.age);
+
+			PythonCodeGeneration::GeneratePythonClass(currentPath, "GeneratedFiles.Robot", RobotCodeWithZeroErrorFixedString);
+
+			robot.RegenerateFromScript();
+
+			Assert::AreEqual(expected, robot.age, L"Variable value was not retained through code refresh");
 		}
 	};
 }
@@ -487,29 +621,116 @@ namespace PythonLoggingTestCases
 	TEST_CLASS(PythonLoggingTestClass)
 	{
 	public:
-		std::filesystem::path LogDirectory = currentPath.append("Logs");
-		TEST_METHOD(LogToFile)
+		std::filesystem::path LogDirectory = currentPath / "Logs";
+		std::filesystem::path LogFilePath = LogDirectory / "LogFile.txt";
+		std::string LoggingMessage = "My unit testing message";
+
+		TEST_METHOD_CLEANUP(CleanupLogTesting)
 		{
-			std::filesystem::path logFilePath = LogDirectory / "LogFile.txt";
-			PythonLogging::StartLoggingContext(logFilePath);
-			std::string message = "my unit testing message";
-			testSnake.printMessage(message);
-			PythonLogging::FlushLoggingContext();
-
-			std::string fileResults;
-			std::ifstream logFile(logFilePath.string().c_str());
-			std::getline(logFile, fileResults);
-			logFile.close();
-
-			Assert::AreEqual(message, fileResults);
-
 			PythonLogging::CloseLoggingContext();
 			PythonFileManagement::ClearDirectory(LogDirectory);
 		}
-		// TODO support logging that doesn't reset every time we start logging to that file
-		// TODO test logging python error exception
-		// TODO make a library function that compares the contents of a file to string.
-		//   Useful for checking if a generated file has been changed and needs to be regenerated
-		//		Also for testing code generation and logging messages
+		TEST_METHOD(PrintToLogFile)
+		{
+			PythonLogging::StartLoggingContext(LogFilePath);
+			testSnake.printMessage(LoggingMessage);
+			PythonLogging::FlushLoggingContext();
+
+			std::string result = PythonFileManagement::GetFileContents(LogFilePath);
+			std::string expected = LoggingMessage + "\n";
+			Assert::AreEqual(expected, result);
+		}
+		TEST_METHOD(ExceptionToLogFile)
+		{
+			PythonLogging::StartLoggingContext(LogFilePath);
+			try {
+				testSnake.issueFunction();
+			}
+			catch (PythonMethodError e) { }
+			PythonLogging::FlushLoggingContext();
+
+			std::string result = PythonFileManagement::GetFileContents(LogFilePath);
+			Assert::IsTrue(result.find("TypeError") != std::string::npos);
+		}
+		TEST_METHOD(PrintToLogFileMiltipleTimes)
+		{
+			PythonLogging::StartLoggingContext(LogFilePath);
+			testSnake.printMessage(LoggingMessage);
+			PythonLogging::CloseLoggingContext();
+
+			PythonLogging::StartLoggingContext(LogFilePath);
+			testSnake.printMessage(LoggingMessage);
+			PythonLogging::FlushLoggingContext();
+
+			std::string result = PythonFileManagement::GetFileContents(LogFilePath);
+			std::string expected = LoggingMessage + "\n" + LoggingMessage + "\n";
+			Assert::AreEqual(expected, result);
+		}
+		TEST_METHOD(ClearLogFile)
+		{
+			PythonLogging::StartLoggingContext(LogFilePath);
+			testSnake.printMessage(LoggingMessage);
+			PythonLogging::CloseLoggingContext();
+
+			std::string result = PythonFileManagement::GetFileContents(LogFilePath);
+			std::string expected = LoggingMessage + "\n";
+			Assert::AreEqual(expected, result);
+
+			PythonFileManagement::ClearFile(LogFilePath);
+
+			result = PythonFileManagement::GetFileContents(LogFilePath);
+			expected = "";
+			Assert::AreEqual(expected, result);
+		}
+	};
+	TEST_CLASS(PythonReplayTestClass)
+	{
+	public:
+		std::filesystem::path LogDirectory = currentPath / "Logs";
+		std::filesystem::path LogFilePath = LogDirectory / "LogFileReplay.txt";
+		TEST_METHOD_CLEANUP(CleanupReplayTesting)
+		{
+			PythonLogging::CloseLoggingContext();
+			PythonFileManagement::ClearDirectory(LogDirectory);
+		}
+		TEST_METHOD(SupportReplay)
+		{
+			// Generate module with failing method
+			PythonCodeGeneration::GeneratePythonClass(currentPath, "GeneratedFiles.Robot", RobotCodeWithZeroErrorString);
+			TestRobotClass robot = TestRobotClass("GeneratedFiles.Robot", "Robot");
+			float result;
+
+			// Test with error
+			PythonLogging::StartLoggingContext(LogFilePath);
+			try {
+				result = robot.divide(1.0, 0.0);
+			}
+			catch (PythonMethodError e) { }
+			PythonLogging::FlushLoggingContext();
+
+			std::string fileContents = PythonFileManagement::GetFileContents(LogFilePath);
+			std::wstring fileContentsOutput = std::wstring(fileContents.begin(), fileContents.end());
+			Assert::IsTrue(fileContents.find("ZeroDivisionError") != std::string::npos, fileContentsOutput.c_str());
+
+			//TODO maybe save state before executing function, be able to save that off
+			// State should also include variables that aren't in C++
+			// State should include module/class called, variables within class, globals within module (and imported?)
+			// Replay should setup all the variables and run the function
+			// Should be runnable by the user so they can breakpoint easily
+
+
+			// TODO Test replay with error
+			// TODO Generate module with working method
+			// 
+			PythonCodeGeneration::GeneratePythonClass(currentPath, "GeneratedFiles.Robot", RobotCodeWithZeroErrorFixedString);
+			
+			/*
+			robot = TestRobotClass("GeneratedFiles.Robot", "Robot");
+			// TODO Run replay that would have errored, rather than calling the function again
+			expected = 0.0;
+			result = robot.divide(1.0, 0.0);
+			Assert::AreEqual(expected, result);
+			*/
+		}
 	};
 }

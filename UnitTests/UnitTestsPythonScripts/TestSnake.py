@@ -46,6 +46,8 @@ class TestSnake (TestAnimal):
         self.age = "bad" + 7.0 + False
     def printMessage(self, msg):
         print(msg)
+    def GetPositionXIndirectly(self):
+        return self.position.X
     
 
 

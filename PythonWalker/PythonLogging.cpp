@@ -16,8 +16,7 @@ static void SetPythonSystemVar(std::string sysVar, std::string newVal)
 }
 void PythonLogging::StartLoggingContext(std::filesystem::path path)
 {
-	PythonFileManagement::CreateFile(path, true);
-	std::string openFileString = "open(r\"" + path.string() + "\", 'w')";
+	std::string openFileString = "open(r\"" + path.string() + "\", 'a')";
 	SetPythonSystemVar("sys.stdout", openFileString);
 	SetPythonSystemVar("sys.stderr", openFileString);
 }

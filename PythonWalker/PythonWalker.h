@@ -14,6 +14,7 @@
 * https://docs.python.org/3/extending/embedding.html
 * https://stackoverflow.com/questions/39813301/creating-a-python-object-in-c-and-calling-its-method
 * https://stackoverflow.com/questions/16777126/pyobject-callmethod-with-keyword-arguments
+* https://docs.python.org/3/reference/datamodel.html
 */
 
 class PythonWalker
@@ -25,7 +26,6 @@ public:
 	~PythonWalker();
 
 	void TearDown();
-
 
 	std::vector<std::string> ScriptsPaths;
 	/* Searches for python classes and modules in the path given in the PythonWalker setup
@@ -70,6 +70,7 @@ public:
 	static PyObject* GetPythonClass(PyObject* pModule, const char* className);
 	static bool MatchesModule(PyObject* pObject, const char* moduleName);
 	static PyObject* CreateObject(PyObject* module, const char* className);
+	static void CopyPyObjectValues(PyObject* src, PyObject* dest);
 	/*
 	* @param pythonObject - The object to run the function on
 	* @param functionName - Name of function in the python script to run
@@ -78,3 +79,9 @@ public:
 	static PyObject* ExecuteFunction(PyObject* pythonObject, const char* functionName, PyObject* keywords=nullptr);
 };
 
+static PyObject* GetPyObjectFromValue(PyWalkerObjectInstance value)
+{
+	PyObject* dupObject = value.ClassDef.GetNewObject();
+	PythonWalker::CopyPyObjectValues(value.PyObjectInstance, dupObject);
+	return dupObject;
+}
