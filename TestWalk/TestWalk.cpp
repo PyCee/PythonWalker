@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include "../PythonWalker/PythonWalker.h"
+#include "../UnitTests/CodeGenStrings.h"
 
 class TestPyClass : public PyWalkerObjectInstance {
 public:
@@ -29,9 +30,22 @@ int main()
     PythonWalker pw = PythonWalker(paths);
 
     std::vector<PythonClassDefinition> test = pw.GetScripts();
-    TestPyClass testSnake = TestPyClass("TestSnake", "TestSnake");
+    //TestPyClass testSnake = TestPyClass("TestFakeSnake", "TestFakeSnake");
 
-    testSnake.RegenerateFromScript();
+    
+    PythonCodeGeneration::DeletePythonModule(currentPath, "GeneratedFiles", true);
+
+    std::filesystem::path filePath = PythonCodeGeneration::GeneratePythonClass(currentPath, "GeneratedFiles.Robot", RobotCodeString);
+
+    std::string fileContents = PythonFileManagement::GetFileContents(filePath);
+
+    while (true) {
+        if (PythonFileManagement::HasFileChanged(filePath, RobotCodeString)) {
+            break;
+        }
+    }
+
+
 
     //TODO better handling python errors
     //  1. Logging - Done
@@ -40,6 +54,9 @@ int main()
     // 
     //TODO Maybe support standalone module functions
     //  Not super important, but feels like I might as well
+    //  Should do to support user writing functions without a whole class interface
+
+    PythonCodeGeneration::DeletePythonModule(currentPath, "GeneratedFiles", true);
 
     std::cout << "Done walking the python." << std::endl;
 }

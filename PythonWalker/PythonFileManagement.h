@@ -12,6 +12,7 @@ public:
 	static std::ofstream CreateFile(std::filesystem::path path, bool immediatlyClose=false);
 	static void ClearFile(std::filesystem::path path);
 	static std::string GetFileContents(std::filesystem::path filePath);
+	static bool HasFileChanged(std::filesystem::path filePath, std::string pastFileContents);
 	static void ClearDirectory(std::filesystem::path directoryPath);
 };
 

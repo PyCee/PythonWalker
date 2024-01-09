@@ -4,42 +4,53 @@
 
 #include <fstream>
 
-
-void PythonCodeGeneration::GeneratePythonClass(std::filesystem::path path, std::vector<std::string> modules, std::string code)
+std::filesystem::path PythonCodeGeneration::GetGeneratedFilePath(std::filesystem::path path, std::vector<std::string> modules)
 {
 	for (std::string module : modules) {
 		path /= module;
 	}
+	return path;
+}
+
+std::filesystem::path PythonCodeGeneration::GeneratePythonClass(std::filesystem::path path, std::vector<std::string> modules, std::string code, bool append)
+{
+	path = GetGeneratedFilePath(path, modules);
+	path += ".py";
 
 	std::filesystem::create_directories(path.parent_path());
-	std::ofstream newFile(path.string() + ".py", std::ios::app);
+	std::ofstream newFile(path.string(), append ? std::ios::app : std::ios::out);
 	newFile << code;
 	newFile.close();
 	PyImport_ReloadModule(PythonWalker::LoadModule(modules));
+	return path;
 }
 
-void PythonCodeGeneration::GeneratePythonClass(std::filesystem::path path, std::string module, std::string code)
+std::filesystem::path PythonCodeGeneration::GeneratePythonClass(std::filesystem::path path, std::string module, std::string code, bool append)
 {
-	GeneratePythonClass(path, PythonWalker::ParsePythonModuleString(module), code);
+	return GeneratePythonClass(path, PythonWalker::ParsePythonModuleString(module), code, append);
 }
 
-void PythonCodeGeneration::GeneratePythonClass(std::filesystem::path path, PythonClassDefinition def, std::string code)
+std::filesystem::path PythonCodeGeneration::GeneratePythonClass(std::filesystem::path path, PythonClassDefinition def, std::string code, bool append)
 {
-	GeneratePythonClass(path, def.Module, code);
+	return GeneratePythonClass(path, def.Module, code, append);
 }
 
 void PythonCodeGeneration::DeletePythonModule(std::filesystem::path path, std::vector<std::string> modules, bool isDirectory)
 {
-	for (std::string module : modules) {
-		path /= module;
-	}
+	path = GetGeneratedFilePath(path, modules);
+
 	if (isDirectory) {
 		path += "\\";
 	}
 	else {
 		path += ".py";
 	}
-	std::filesystem::remove_all(path);
+	try {
+		std::filesystem::remove_all(path);
+	}
+	catch (std::filesystem::filesystem_error e) {
+		// Catch error if the user has the fiule open when we're trying to delete
+	}
 }
 
 void PythonCodeGeneration::DeletePythonModule(std::filesystem::path path, std::string module, bool isDirectory)
@@ -49,5 +60,11 @@ void PythonCodeGeneration::DeletePythonModule(std::filesystem::path path, std::s
 
 void PythonCodeGeneration::DeletePythonModule(std::filesystem::path path, PythonClassDefinition def, bool isDirectory)
 {
-	DeletePythonModule(path, def.Module, isDirectory);
+	std::vector<std::string> modules = PythonWalker::ParsePythonModuleString(def.Module);
+
+	// If we are clearing the directory, pop the last module since that's a specific filename
+	if (isDirectory) {
+		modules.pop_back();
+	}
+	DeletePythonModule(path, modules, isDirectory);
 }

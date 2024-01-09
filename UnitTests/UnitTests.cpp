@@ -57,7 +57,7 @@ public:
 	__PYW_TYPING_VAR(int, fakeInt)
 
 	__PYW_TYPING_METHOD(void, increaseAgeByOne)
-	__PYW_TYPING_METHOD(void, issueFunction)
+	__PYW_TYPING_METHOD(void, functionThatHitsTypeError)
 	__PYW_TYPING_METHOD(double, calculateTerrariumArea)
 	__PYW_TYPING_METHOD(void, changeName, const char*, newName)
 	__PYW_TYPING_METHOD(double, AddThreeParametersTogether, int, a, float, b, double, c)
@@ -367,7 +367,7 @@ namespace PythonInterfaceTestCases
 		}
 		TEST_METHOD(FunctionIssue)
 		{
-			auto func = [] {testSnake.issueFunction(); };
+			auto func = [] {testSnake.functionThatHitsTypeError(); };
 			Assert::ExpectException<PythonMethodError>(func);
 		}
 		TEST_METHOD(ModuleDNE)
@@ -500,11 +500,11 @@ namespace PythonCodeGenerationTestCases
 		PythonClassDefinition RobotTwoDefinition = PythonClassDefinition("GeneratedFiles.Robot", "RobotTwo");
 		TEST_METHOD(GenerateModuleAndClass)
 		{
-			PythonCodeGeneration::GeneratePythonClass(currentPath, RobotDefinition, RobotCodeString);
+			std::filesystem::path path = PythonCodeGeneration::GeneratePythonClass(currentPath, RobotDefinition, RobotCodeString);
 			std::vector<PythonClassDefinition> scripts = pythonWalker.GetScripts(true);
 			Assert::IsTrue(VectorContains<PythonClassDefinition>(scripts, RobotDefinition));
 
-			std::string result = PythonFileManagement::GetFileContents(currentPath / "GeneratedFiles\\Robot.py");
+			std::string result = PythonFileManagement::GetFileContents(path);
 			Assert::AreEqual(RobotCodeString, result);
 		}
 		TEST_METHOD(DeleteScriptModule)
@@ -524,7 +524,7 @@ namespace PythonCodeGenerationTestCases
 			std::vector<PythonClassDefinition> scripts = pythonWalker.GetScripts(true);
 			Assert::IsTrue(VectorContains<PythonClassDefinition>(scripts, RobotDefinition));
 
-			PythonCodeGeneration::DeletePythonModule(currentPath, "GeneratedFiles", true);
+			PythonCodeGeneration::DeletePythonModule(currentPath, RobotDefinition, true);
 
 			scripts = pythonWalker.GetScripts(true);
 			Assert::IsFalse(VectorContains<PythonClassDefinition>(scripts, RobotDefinition));
@@ -559,25 +559,40 @@ namespace PythonCodeGenerationTestCases
 		*/
 		TEST_METHOD(GenerateModuleAndTwoClasses)
 		{
-			PythonCodeGeneration::GeneratePythonClass(currentPath, RobotDefinition, RobotCodeString);
-			PythonCodeGeneration::GeneratePythonClass(currentPath, RobotTwoDefinition, RobotTwoCodeString);
+			std::filesystem::path filePath = PythonCodeGeneration::GeneratePythonClass(currentPath, RobotDefinition, RobotCodeString);
+			std::filesystem::path filePathTwo = PythonCodeGeneration::GeneratePythonClass(currentPath, RobotTwoDefinition, RobotTwoCodeString, true);
+			
+			Assert::IsTrue(filePath == filePathTwo);
+			
 			std::vector<PythonClassDefinition> scripts = pythonWalker.GetScripts(true);
 			Assert::IsTrue(VectorContains<PythonClassDefinition>(scripts, RobotDefinition));
 			Assert::IsTrue(VectorContains<PythonClassDefinition>(scripts, RobotTwoDefinition));
 
-			std::string result = PythonFileManagement::GetFileContents(currentPath / "GeneratedFiles\\Robot.py");
+			std::string result = PythonFileManagement::GetFileContents(filePath);
 			Assert::AreEqual(RobotCodeString + RobotTwoCodeString, result);
+		}
+		TEST_METHOD(OverwriteFileWithoutAppending)
+		{
+			std::filesystem::path filePath = PythonCodeGeneration::GeneratePythonClass(currentPath, RobotDefinition, RobotCodeString);
+			std::string firstGeneration = PythonFileManagement::GetFileContents(filePath);
+			Assert::AreEqual(firstGeneration, RobotCodeString);
+
+			PythonCodeGeneration::GeneratePythonClass(currentPath, RobotTwoDefinition, RobotTwoCodeString);
+			std::string secondGeneration = PythonFileManagement::GetFileContents(filePath);
+
+			Assert::AreNotEqual(firstGeneration, secondGeneration);
+			Assert::AreEqual(secondGeneration, RobotTwoCodeString);
 		}
 		TEST_METHOD(RegenerateClassWithChange)
 		{
-			PythonCodeGeneration::GeneratePythonClass(currentPath, "GeneratedFiles.Robot", RobotCodeWithZeroErrorString);
-			TestRobotClass robot = TestRobotClass("GeneratedFiles.Robot", "Robot");
+			PythonCodeGeneration::GeneratePythonClass(currentPath, RobotDefinition, RobotCodeWithZeroErrorString);
+			TestRobotClass robot = RobotDefinition.GetNewObject();
 			float expected, result;
 
 			auto func = [&] {robot.divide(1.0, 0.0); };
 			Assert::ExpectException<PythonMethodError>(func);
 			
-			PythonCodeGeneration::GeneratePythonClass(currentPath, "GeneratedFiles.Robot", RobotCodeWithZeroErrorFixedString);
+			PythonCodeGeneration::GeneratePythonClass(currentPath, RobotDefinition, RobotCodeWithZeroErrorFixedString);
 
 			robot.RegenerateFromScript();
 
@@ -585,29 +600,71 @@ namespace PythonCodeGenerationTestCases
 			result = robot.divide(1.0, 0.0);
 			Assert::AreEqual(expected, result);
 		}
-		TEST_METHOD(RegenAfterReassignment)
+		TEST_METHOD(DetectFileChange)
 		{
-			PythonCodeGeneration::GeneratePythonClass(currentPath, "GeneratedFiles.Robot", RobotCodeWithZeroErrorString);
-			TestRobotClass robot = TestRobotClass("GeneratedFiles.Robot", "Robot");
-			TestRobotClass robot2 = TestRobotClass("GeneratedFiles.Robot", "Robot");
-			int expected = 10;
+			std::filesystem::path filePath = PythonCodeGeneration::GeneratePythonClass(currentPath, RobotDefinition, RobotCodeString);
 
-			robot2.age = expected;
-			robot = robot2;
-			Assert::AreEqual(expected, robot.age);
+			std::string fileContents = PythonFileManagement::GetFileContents(filePath);
 
-			robot.RegenerateFromScript();
+			Assert::IsFalse(PythonFileManagement::HasFileChanged(filePath, fileContents));
 
+			PythonCodeGeneration::GeneratePythonClass(currentPath, RobotDefinition, RobotTwoCodeString);
+
+			Assert::IsTrue(PythonFileManagement::HasFileChanged(filePath, fileContents));
+		}
+		TEST_METHOD(AttemptToDeleteOpenFile)
+		{
+			std::filesystem::path filePath = PythonCodeGeneration::GeneratePythonClass(currentPath, RobotDefinition, RobotCodeString);
+
+			std::ofstream newFile(filePath.string(), std::ios::app);
+
+			// Check that this doesn't throw an error by trying to delete while the file is open
+			PythonCodeGeneration::DeletePythonModule(currentPath, RobotDefinition, true);
+
+			newFile.close();
+
+			// Confirm that we didn't delete the file
+			std::string fileContents = PythonFileManagement::GetFileContents(filePath);
+			Assert::IsTrue(fileContents == RobotCodeString);
+		}
+		TEST_METHOD(GenerateToOpenFile)
+		{
+			std::filesystem::path filePath = PythonCodeGeneration::GeneratePythonClass(currentPath, RobotDefinition, RobotCodeString);
+
+			std::ofstream newFile(filePath.string(), std::ios::app);
+
+			PythonCodeGeneration::GeneratePythonClass(currentPath, RobotDefinition, RobotTwoCodeString);
+			std::string fileContents = PythonFileManagement::GetFileContents(filePath);
+			Assert::AreEqual(RobotTwoCodeString, fileContents, L"Overwrote file contents when file was open");
+
+			PythonCodeGeneration::GeneratePythonClass(currentPath, RobotDefinition, RobotCodeString, true);
+			fileContents = PythonFileManagement::GetFileContents(filePath);
+			Assert::AreEqual(RobotTwoCodeString + RobotCodeString, fileContents, L"Appended to file contents when file was open");
+
+			newFile.close();
 		}
 		TEST_METHOD(KeepVariableValueThroughRegeneration)
 		{
-			PythonCodeGeneration::GeneratePythonClass(currentPath, "GeneratedFiles.Robot", RobotCodeWithZeroErrorString);
-			TestRobotClass robot = TestRobotClass("GeneratedFiles.Robot", "Robot");
+			PythonCodeGeneration::GeneratePythonClass(currentPath, RobotDefinition, RobotCodeWithZeroErrorString);
+			TestRobotClass robot = RobotDefinition.GetNewObject();
 			int expected = 10;
 			robot.age = expected;
 			Assert::AreEqual(expected, robot.age);
 
-			PythonCodeGeneration::GeneratePythonClass(currentPath, "GeneratedFiles.Robot", RobotCodeWithZeroErrorFixedString);
+			robot.RegenerateFromScript();
+
+			Assert::AreEqual(expected, robot.age);
+		}
+		
+		TEST_METHOD(KeepVariableValueThroughSourceUpdate)
+		{
+			PythonCodeGeneration::GeneratePythonClass(currentPath, RobotDefinition, RobotCodeWithZeroErrorString);
+			TestRobotClass robot = RobotDefinition.GetNewObject();
+			int expected = 10;
+			robot.age = expected;
+			Assert::AreEqual(expected, robot.age);
+
+			PythonCodeGeneration::GeneratePythonClass(currentPath, RobotDefinition, RobotCodeWithZeroErrorFixedString);
 
 			robot.RegenerateFromScript();
 
@@ -644,12 +701,14 @@ namespace PythonLoggingTestCases
 		{
 			PythonLogging::StartLoggingContext(LogFilePath);
 			try {
-				testSnake.issueFunction();
+				testSnake.functionThatHitsTypeError();
 			}
 			catch (PythonMethodError e) { }
 			PythonLogging::FlushLoggingContext();
 
 			std::string result = PythonFileManagement::GetFileContents(LogFilePath);
+
+			// Check that the log file returned a type error
 			Assert::IsTrue(result.find("TypeError") != std::string::npos);
 		}
 		TEST_METHOD(PrintToLogFileMiltipleTimes)

@@ -57,6 +57,11 @@ std::string PythonFileManagement::GetFileContents(std::filesystem::path filePath
     buffer << file.rdbuf();
     return buffer.str();
 }
+bool PythonFileManagement::HasFileChanged(std::filesystem::path filePath, std::string pastFileContents)
+{
+    std::string newFileContents = GetFileContents(filePath);
+    return newFileContents != pastFileContents;
+}
 void PythonFileManagement::ClearDirectory(std::filesystem::path directory)
 {
     for (const auto& entry : std::filesystem::directory_iterator(directory))

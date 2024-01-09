@@ -42,7 +42,7 @@ class TestSnake (TestAnimal):
         return (1, 2, 3, 4, 5)
     def noParamFunction(self):
         pass
-    def issueFunction(self):
+    def functionThatHitsTypeError(self):
         self.age = "bad" + 7.0 + False
     def printMessage(self, msg):
         print(msg)
