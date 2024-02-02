@@ -6,6 +6,7 @@
 #include "../PythonWalker/PythonWalker.h"
 #include "CodeGenStrings.h"
 #include <fstream>
+#include <list>
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -50,9 +51,8 @@ public:
 	__PYW_TYPING_VAR(double, terrariumDepth)
 	__PYW_TYPING_VAR(float, terrariumHeight)
 	__PYW_TYPING_VAR(bool, isCool)
-		__PYW_TYPING_VAR(PyPosition, position)
-		__PYW_TYPING_VAR(std::vector<const char*>, friends)
-
+	__PYW_TYPING_VAR(PyPosition, position)
+	__PYW_TYPING_VAR(std::vector<const char*>, friends)
 
 	__PYW_TYPING_VAR(int, fakeInt)
 
@@ -61,7 +61,11 @@ public:
 	__PYW_TYPING_METHOD(double, calculateTerrariumArea)
 	__PYW_TYPING_METHOD(void, changeName, const char*, newName)
 	__PYW_TYPING_METHOD(double, AddThreeParametersTogether, int, a, float, b, double, c)
+
+	// Inherently checks that we can overload function parameters like this,
+	//   which end up calling into the same python function.
 	__PYW_TYPING_METHOD(double, AddNumbersTogether, std::vector<double>, numbers)
+	__PYW_TYPING_METHOD(double, AddNumbersTogether, std::list<double>, numbers)
 	__PYW_TYPING_METHOD(std::vector<const char *>, getFriends)
 	__PYW_TYPING_METHOD(std::vector<int>, countToFive)
 	
@@ -312,6 +316,7 @@ namespace PythonInterfaceTestCases
 			};
 
 			// Right now this runs the getter on friends, accesses the element const char *, and sets that.
+			// Overwrite old entry with new entry
 			testSnake.friends[2] = newFriend;
 
 			//TODO I thought ampersand on the getter return value fixed it, but now it reverts soon after...
@@ -326,14 +331,24 @@ namespace PythonInterfaceTestCases
 			Assert::IsTrue(VectorContains(testSnake.friends, newFriend));
 			Assert::IsTrue(!VectorContains(testSnake.friends, notSnakeFriend));
 		}
-		TEST_METHOD(ListAsParameter)
+		TEST_METHOD(VectorAsParameter)
 		{
-			std::vector<double> numbers = std::vector<double>{
+			std::vector<double> vectorNumbers = std::vector<double>{
 				1, 2, 4, 8, 16
 			};
 			double sum = 0;
-			for (double i : numbers) sum += i;
-			double result = testSnake.AddNumbersTogether(numbers);
+			for (double i : vectorNumbers) sum += i;
+			double result = testSnake.AddNumbersTogether(vectorNumbers);
+			Assert::AreEqual(sum, result);
+		}
+		TEST_METHOD(ListAsParameter)
+		{
+			std::list<double> listNumbers = std::list<double>{
+				1, 2, 4, 8, 16, 32
+			};
+			double sum = 0;
+			for (double i : listNumbers) sum += i;
+			double result = testSnake.AddNumbersTogether(listNumbers);
 			Assert::AreEqual(sum, result);
 		}
 		TEST_METHOD(ListAsReturnValue)

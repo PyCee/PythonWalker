@@ -2,28 +2,38 @@
 
 #include "PythonHelper.h"
 #include <vector>
+#include <list>
 
 class PyWalkerObjectInstance;
 
 // https://stackoverflow.com/questions/6953969/can-static-assert-check-if-a-type-is-a-vector
 // https://stackoverflow.com/questions/58337609/c-template-specialization-in-subtemplates
 
+//TODO simplify the vector/list comparisons
 template <typename C> struct is_vector : std::false_type {};
 template <typename T, typename A> struct is_vector< std::vector<T, A> > : std::true_type {};
 template <typename C> inline constexpr bool is_vector_v = is_vector<C>::value;
+
+template <typename C> struct is_list : std::false_type {};
+template <typename T, typename A> struct is_list< std::list<T, A> > : std::true_type {};
+template <typename C> inline constexpr bool is_list_v = is_list<C>::value;
+
+template <typename T> static T GetValueFromIterablePyObject(PyObject* pyObject) {
+	T result = {};
+	Py_ssize_t length = PyTuple_Size(pyObject);
+	for (int i = 0; i < length; i++) {
+		result.push_back(GetValueFromPyObject<typename T::value_type>(PyTuple_GET_ITEM(pyObject, i)));
+	}
+	return result;
+}
 
 template <typename T> static T GetValueFromPyObject(PyObject* pyObject)
 {
 	if constexpr (std::is_base_of_v<PyWalkerObjectInstance, T>) {
 		return T(pyObject);
 	}
-	if constexpr (is_vector_v<T>) {
-		T result = {};
-		Py_ssize_t length = PyTuple_Size(pyObject);
-		for (int i = 0; i < length; i++) {
-			result.push_back(GetValueFromPyObject<typename T::value_type>(PyTuple_GET_ITEM(pyObject, i)));
-		}
-		return result;
+	if constexpr (is_vector_v<T> || is_list_v<T>) {
+		return GetValueFromIterablePyObject<T>(pyObject);
 	}
 	return T();
 }
@@ -63,11 +73,22 @@ __GEN_GET_PYOBJECT_FROM_PRIMITIVE_VALUE(bool, "i")
 static PyObject* GetPyObjectFromValue(std::string value) { return GetPyObjectFromValue(value.c_str()); }
 static PyObject* GetPyObjectFromValue(PyObject* value) { return value; }
 
-template <typename T>
-static PyObject* GetPyObjectFromValue(std::vector<T> values) {
+template<typename T>
+static PyObject* GetPyObjectFromIterableValue(T values) {
 	PyObject* tuple = PyTuple_New(values.size());
-	for (int i = 0; i < values.size(); i++) {
-		PyTuple_SET_ITEM(tuple, i, GetPyObjectFromValue(values[i]));
+	int index = 0;
+	for (typename T::value_type const& iter : values) {
+		PyTuple_SET_ITEM(tuple, index, GetPyObjectFromValue(iter));
+		index++;
 	}
 	return tuple;
+}
+
+template <typename T>
+static PyObject* GetPyObjectFromValue(std::vector<T> values) {
+	return GetPyObjectFromIterableValue(values);
+}
+template <typename T>
+static PyObject* GetPyObjectFromValue(std::list<T> values) {
+	return GetPyObjectFromIterableValue(values);
 }

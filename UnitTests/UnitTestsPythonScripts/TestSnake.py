@@ -36,6 +36,8 @@ class TestSnake (TestAnimal):
         return a+b+c
     def AddNumbersTogether(self, numbers):
         return sum(numbers)
+    def AddNumbersTogetherList(self, numbers):
+        return self.AddNumbersTogether(numbers)
     def getFriends(self):
         return self.friends
     def countToFive(self):
