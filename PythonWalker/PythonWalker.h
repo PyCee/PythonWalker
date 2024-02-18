@@ -8,7 +8,7 @@
 #include "TypeConversions.h"
 #include "CodeGeneration.h"
 #include "Logging.h"
-#include "FileManagement.h"
+#include "FileManager.h"
 #include "TypingsGeneration.h"
 /*
 * https://docs.python.org/3/c-api/

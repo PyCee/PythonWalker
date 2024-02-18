@@ -27,7 +27,7 @@
     <ClInclude Include="Exceptions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="FileManagement.h">
+    <ClInclude Include="FileManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ClassDefinition.h">
@@ -56,7 +56,7 @@
     <ClCompile Include="Exceptions.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="FileManagement.cpp">
+    <ClCompile Include="FileManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ClassDefinition.cpp">
