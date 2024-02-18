@@ -9,6 +9,7 @@
 #include "CodeGeneration.h"
 #include "Logging.h"
 #include "FileManagement.h"
+#include "TypingsGeneration.h"
 /*
 * https://docs.python.org/3/c-api/
 * https://docs.python.org/3/extending/embedding.html

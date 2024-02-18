@@ -184,6 +184,7 @@
     <ClInclude Include="PythonWalker.h" />
     <ClInclude Include="Exceptions.h" />
     <ClInclude Include="ObjectInstance.h" />
+    <ClInclude Include="TypingsGeneration.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ClassDefinition.cpp" />
