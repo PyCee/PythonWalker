@@ -42,6 +42,7 @@ public:
 class TestPythonClass : public PythonWalker::ObjectInstance {
 public:
 	using PythonWalker::ObjectInstance::ObjectInstance;
+	TestPythonClass() : PythonWalker::ObjectInstance("TestSnake", "TestSnake") {};
 
 	__PYW_TYPING_VAR(const char*, name)
 	__PYW_TYPING_VAR(std::string, birthplace)
@@ -104,7 +105,7 @@ namespace PythonInterfaceTestCases
 	{
 	public:
 
-		TestPythonClass testSnake = TestPythonClass("TestSnake", "TestSnake");
+		TestPythonClass testSnake;
 		TEST_METHOD(LoadModule)
 		{
 			PyObject* module = PythonWalker::LoadModule("TestSnake");
@@ -132,7 +133,7 @@ namespace PythonInterfaceTestCases
 	TEST_CLASS(PythonObjectInterfaceTestClass)
 	{
 	public:
-		TestPythonClass testSnake = TestPythonClass("TestSnake", "TestSnake");
+		TestPythonClass testSnake;
 		TEST_METHOD(InitializeObject)
 		{
 			TestPythonClass testSnakeSuccess = TestPythonClass("TestSnake", "TestSnake");
@@ -367,7 +368,7 @@ namespace PythonInterfaceTestCases
 	TEST_CLASS(PythonInterfaceExceptionTestClass)
 	{
 	public:
-		TestPythonClass testSnake = TestPythonClass("TestSnake", "TestSnake");
+		TestPythonClass testSnake;
 		TEST_METHOD(FakeVariableException)
 		{
 			auto func = [this] {testSnake.fakeInt = 1; };
@@ -696,7 +697,7 @@ namespace PythonLoggingTestCases
 	TEST_CLASS(PythonLoggingTestClass)
 	{
 	public:
-		TestPythonClass testSnake = TestPythonClass("TestSnake", "TestSnake");
+		TestPythonClass testSnake;
 		std::filesystem::path LogDirectory = currentPath / "Logs";
 		std::filesystem::path LogFilePath = LogDirectory / "LogFile.txt";
 		std::string LoggingMessage = "My unit testing message";
