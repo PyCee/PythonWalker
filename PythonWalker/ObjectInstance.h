@@ -3,9 +3,70 @@
 #include <iostream>
 #include <format>
 #include "PythonHelper.h"
-#include "PythonWalkerExceptions.h"
-#include "PythonTypeConversions.h"
-#include "PythonClassDefinition.h"
+#include "Exceptions.h"
+#include "TypeConversions.h"
+#include "ClassDefinition.h"
+
+namespace PythonWalker {
+	class ObjectInstance
+	{
+	public:
+		ObjectInstance();
+		ObjectInstance(const char* moduleName, const char* className);
+		ObjectInstance(PyObject* pyObject);
+		~ObjectInstance();
+
+		template <typename T>
+		T ExecuteFunction(const char* functionName, PyObject* keywords = nullptr) {
+			PyObject* result = ExecuteFunctionInternal(functionName, keywords);
+			return GetValueFromPyObject<T>(result);
+		}
+		bool IsInitialized() const { return PyObjectInstance != nullptr; }
+		void RegenerateFromScript();
+
+		PyObject* PyObjectInstance;
+		ClassDefinition ClassDef;
+
+
+	protected:
+
+	private:
+		PyObject* ExecuteFunctionInternal(const char* functionName, PyObject* keywords = nullptr);
+	public:
+
+		template <typename T>
+		T GetPythonVariable(const char* variableName) {
+			if (PyObjectInstance == nullptr) {
+				throw PythonObjectNotInitialized();
+			}
+
+			PyObject* pyVariableName = PyUnicode_FromString(variableName);
+			if (!PyObject_HasAttr(PyObjectInstance, pyVariableName)) {
+				throw PythonAttributeDNE(variableName, ClassDef.ClassName, ClassDef.Module);
+			}
+			PyObject* pyValue = PyObject_GetAttr(PyObjectInstance, pyVariableName);
+			if (pyValue == NULL) {
+				throw PythonAttributeDNE(variableName, ClassDef.ClassName, ClassDef.Module);
+			}
+			return GetValueFromPyObject<T>(pyValue);
+		}
+
+		template <typename T>
+		void SetPythonVariable(const char* variableName, T value) {
+			if (PyObjectInstance == nullptr) {
+				throw PythonObjectNotInitialized();
+			}
+
+			PyObject* pyVariableName = PyUnicode_FromString(variableName);
+			if (!PyObject_HasAttr(PyObjectInstance, pyVariableName)) {
+				throw PythonAttributeDNE(variableName, ClassDef.ClassName, ClassDef.Module);
+			}
+			PyObject* pyValue = GetPyObjectFromValue(value);
+			PyObject_SetAttr(PyObjectInstance, pyVariableName, pyValue);
+		}
+	};
+}
+
 
 /*
 class PyWalkerObjectInstance;
@@ -36,64 +97,8 @@ public:
 	}
 };*/
 
-class PyWalkerObjectInstance
-{
-public:
-	PyWalkerObjectInstance();
-	PyWalkerObjectInstance(const char* moduleName, const char* className);
-	PyWalkerObjectInstance(PyObject* pyObject);
-	~PyWalkerObjectInstance();
+//Return a list/vector object that overloads the & []= to call the refresh
 
-	template <typename T>
-	T ExecuteFunction(const char* functionName, PyObject* keywords = nullptr) {
-		PyObject* result = ExecuteFunctionInternal(functionName, keywords);
-		return GetValueFromPyObject<T>(result);
-	}
-	bool IsInitialized() { return PyObjectInstance != nullptr; }
-	void RegenerateFromScript();
-
-	PyObject* PyObjectInstance;
-	PythonClassDefinition ClassDef;
-
-
-protected:
-
-private:
-	PyObject* ExecuteFunctionInternal(const char* functionName, PyObject* keywords = nullptr);
-public:
-
-	template <typename T>
-	T GetPythonVariable(const char* variableName) {
-		if (PyObjectInstance == nullptr) {
-			throw PythonObjectNotInitialized();
-		}
-
-		PyObject* pyVariableName = PyUnicode_FromString(variableName);
-		if (!PyObject_HasAttr(PyObjectInstance, pyVariableName)) {
-			throw PythonAttributeDNE(variableName, ClassDef.ClassName, ClassDef.Module);
-		}
-		PyObject* pyValue = PyObject_GetAttr(PyObjectInstance, pyVariableName);
-		if (pyValue == NULL) {
-			throw PythonAttributeDNE(variableName, ClassDef.ClassName, ClassDef.Module);
-		}
-		return GetValueFromPyObject<T>(pyValue);
-	}
-
-	template <typename T>
-	void SetPythonVariable(const char* variableName, T value) {
-		if (PyObjectInstance == nullptr) {
-			throw PythonObjectNotInitialized();
-		}
-
-		PyObject* pyVariableName = PyUnicode_FromString(variableName);
-		if (!PyObject_HasAttr(PyObjectInstance, pyVariableName)) {
-			throw PythonAttributeDNE(variableName, ClassDef.ClassName, ClassDef.Module);
-		}
-		PyObject* pyValue = GetPyObjectFromValue(value);
-		PyObject_SetAttr(PyObjectInstance, pyVariableName, pyValue);
-	}
-
-	
 #define __GEN_PYTHON_VARIABLE_FORCE_SET(TYPE, VARIABLE_NAME)			\
 	void Reload_##VARIABLE_NAME(){SetPythonVariable<TYPE>(#VARIABLE_NAME, __GEN_PYTHON_VARIABLE_INTERNAL_NAME(VARIABLE_NAME));}
 #define __GEN_PYTHON_VARIABLE_INTERNAL_NAME(VARIABLE_NAME) _##VARIABLE_NAME
@@ -117,14 +122,14 @@ public:
 	__GEN_PYTHON_VARIABLE_GETTER(TYPE, VARIABLE_NAME)					\
 	__GEN_PYTHON_VARIABLE_SETTER(TYPE, VARIABLE_NAME)					\
 	__declspec(property(get = __GEN_PYTHON_VARIABLE_GETTER_NAME(VARIABLE_NAME), put = __GEN_PYTHON_VARIABLE_SETTER_NAME(VARIABLE_NAME))) TYPE VARIABLE_NAME;
-	
+
 
 	/*
 #define __GEN_PYTHON_VARIABLE_GETTER_WRAPPER(TYPE, VARIABLE_NAME)				\
 	PyVariableWrapper<TYPE> __GEN_PYTHON_VARIABLE_GETTER_NAME(VARIABLE_NAME)() {			\
 		__GEN_PYTHON_VARIABLE_INTERNAL_NAME(VARIABLE_NAME) = GetPythonVariable<TYPE>(#VARIABLE_NAME); \
 		return PyVariableWrapper<TYPE>(#VARIABLE_NAME,__GEN_PYTHON_VARIABLE_INTERNAL_NAME(VARIABLE_NAME),this);\
-	}			
+	}
 #define __GEN_PYTHON_VARIABLE_SETTER_WRAPPER(TYPE, VARIABLE_NAME) \
 	void __GEN_PYTHON_VARIABLE_SETTER_NAME(VARIABLE_NAME)(TYPE value) { \
 		__GEN_PYTHON_VARIABLE_INTERNAL_NAME(VARIABLE_NAME) = value;		\
@@ -140,11 +145,11 @@ public:
 	*/
 
 
-// https://stackoverflow.com/questions/11920577/casting-all-parameters-passed-in-macro-using-va-args
-// Test macros at https://godbolt.org/
-// https://learn.microsoft.com/en-us/cpp/preprocessor/preprocessor-experimental-overview?view=msvc-160
+	// https://stackoverflow.com/questions/11920577/casting-all-parameters-passed-in-macro-using-va-args
+	// Test macros at https://godbolt.org/
+	// https://learn.microsoft.com/en-us/cpp/preprocessor/preprocessor-experimental-overview?view=msvc-160
 
-/* This counts the number of args */
+	/* This counts the number of args */
 #define __GEN_PYTHON_NARGS_SEQ(_1,_2,_3,_4,_5,_6,_7,_8,N,...) N
 #define __GEN_PYTHON_NARGS(...) __GEN_PYTHON_NARGS_(__VA_ARGS__)
 #define __GEN_PYTHON_NARGS_(...) __GEN_PYTHON_NARGS__(__VA_ARGS__)
@@ -178,7 +183,7 @@ public:
 #define DOUBLE_APPLY(macro, separator, ...) __GEN_PYTHON_CAT(DOUBLE_APPLY_, __GEN_PYTHON_NARGS(__VA_ARGS__))(macro, separator, __VA_ARGS__)
 
 #define __GEN_PYTHON_FUNCTION_KEYWORD_ENTRY(TYPE, VARIABLE_NAME)    \
-    PyDict_SetItemString(keywords, #VARIABLE_NAME, GetPyObjectFromValue(VARIABLE_NAME));
+    PyDict_SetItemString(keywords, #VARIABLE_NAME, PythonWalker::GetPyObjectFromValue(VARIABLE_NAME));
 
 #define __GEN_PYTHON_FUNCTION_KEYWORD_PARAMETER(TYPE, VARIABLE_NAME) TYPE VARIABLE_NAME
 
@@ -201,6 +206,3 @@ public:
 		Py_DECREF(keywords);																				\
 		return __GEN_PYTHON_FUNCTION_IF_NOT_VOID(RETURN_TYPE, result);										\
 	}
-};
-
-//Return a list/vector object that overloads the & []= to call the refresh

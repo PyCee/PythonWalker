@@ -5,10 +5,10 @@
 #include "../PythonWalker/PythonWalker.h"
 #include "../UnitTests/CodeGenStrings.h"
 
-class TestPyClass : public PyWalkerObjectInstance {
+class TestPyClass : public PythonWalker::ObjectInstance {
 public:
-    using PyWalkerObjectInstance::PyWalkerObjectInstance;
-    __PYW_TYPING_METHOD(void, logMessage, std::string, msg)
+    using PythonWalker::ObjectInstance::ObjectInstance;
+    __PYW_TYPING_METHOD(void, printMessage, std::string, msg)
         __PYW_TYPING_METHOD(void, issueFunction)
 };
 
@@ -27,24 +27,28 @@ int main()
         currentPathString + "\\..\\UnitTests\\UnitTestsPythonScripts",
         currentPathString
         });
-    PythonWalker pw = PythonWalker(paths);
+    PythonWalker::Initialize();
+    PythonWalker::ScriptManager scriptManager(paths);
 
-    std::vector<PythonClassDefinition> test = pw.GetScripts();
-    //TestPyClass testSnake = TestPyClass("TestFakeSnake", "TestFakeSnake");
+    std::vector<PythonWalker::ClassDefinition> test = scriptManager.GetScripts();
+    TestPyClass testSnake = TestPyClass("TestSnake", "TestSnake");
 
     
-    PythonCodeGeneration::DeletePythonModule(currentPath, "GeneratedFiles", true);
+    PythonWalker::CodeGeneration::DeletePythonModule(currentPath, "GeneratedFiles", true);
 
-    std::filesystem::path filePath = PythonCodeGeneration::GeneratePythonClass(currentPath, "GeneratedFiles.Robot", RobotCodeString);
+    std::filesystem::path filePath = PythonWalker::CodeGeneration::GeneratePythonClass(currentPath, "GeneratedFiles.Robot", RobotCodeString);
 
-    std::string fileContents = PythonFileManagement::GetFileContents(filePath);
+    std::string fileContents = PythonWalker::GetFileContents(filePath);
 
+    testSnake.printMessage("my message");
+
+    /*
     while (true) {
-        if (PythonFileManagement::HasFileChanged(filePath, RobotCodeString)) {
+        if (PythonWalker::HasFileChanged(filePath, RobotCodeString)) {
             break;
         }
     }
-
+    */
 
 
     //TODO better handling python errors
@@ -56,7 +60,7 @@ int main()
     //  Not super important, but feels like I might as well
     //  Should do to support user writing functions without a whole class interface
 
-    PythonCodeGeneration::DeletePythonModule(currentPath, "GeneratedFiles", true);
+    PythonWalker::CodeGeneration::DeletePythonModule(currentPath, "GeneratedFiles", true);
 
     std::cout << "Done walking the python." << std::endl;
 }

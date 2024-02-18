@@ -1,10 +1,10 @@
-#include "PythonCodeGeneration.h"
-#include "PythonClassDefinition.h"
+#include "CodeGeneration.h"
+#include "ClassDefinition.h"
 #include "PythonWalker.h"
 
 #include <fstream>
 
-std::filesystem::path PythonCodeGeneration::GetGeneratedFilePath(std::filesystem::path path, std::vector<std::string> modules)
+std::filesystem::path PythonWalker::CodeGeneration::GetGeneratedFilePath(std::filesystem::path path, std::vector<std::string> modules)
 {
 	for (std::string module : modules) {
 		path /= module;
@@ -12,7 +12,7 @@ std::filesystem::path PythonCodeGeneration::GetGeneratedFilePath(std::filesystem
 	return path;
 }
 
-std::filesystem::path PythonCodeGeneration::GeneratePythonClass(std::filesystem::path path, std::vector<std::string> modules, std::string code, bool append)
+std::filesystem::path PythonWalker::CodeGeneration::GeneratePythonClass(std::filesystem::path path, std::vector<std::string> modules, std::string code, bool append)
 {
 	path = GetGeneratedFilePath(path, modules);
 	path += ".py";
@@ -25,17 +25,17 @@ std::filesystem::path PythonCodeGeneration::GeneratePythonClass(std::filesystem:
 	return path;
 }
 
-std::filesystem::path PythonCodeGeneration::GeneratePythonClass(std::filesystem::path path, std::string module, std::string code, bool append)
+std::filesystem::path PythonWalker::CodeGeneration::GeneratePythonClass(std::filesystem::path path, std::string module, std::string code, bool append)
 {
 	return GeneratePythonClass(path, PythonWalker::ParsePythonModuleString(module), code, append);
 }
 
-std::filesystem::path PythonCodeGeneration::GeneratePythonClass(std::filesystem::path path, PythonClassDefinition def, std::string code, bool append)
+std::filesystem::path PythonWalker::CodeGeneration::GeneratePythonClass(std::filesystem::path path, PythonWalker::ClassDefinition def, std::string code, bool append)
 {
 	return GeneratePythonClass(path, def.Module, code, append);
 }
 
-void PythonCodeGeneration::DeletePythonModule(std::filesystem::path path, std::vector<std::string> modules, bool isDirectory)
+void PythonWalker::CodeGeneration::DeletePythonModule(std::filesystem::path path, std::vector<std::string> modules, bool isDirectory)
 {
 	path = GetGeneratedFilePath(path, modules);
 
@@ -53,12 +53,12 @@ void PythonCodeGeneration::DeletePythonModule(std::filesystem::path path, std::v
 	}
 }
 
-void PythonCodeGeneration::DeletePythonModule(std::filesystem::path path, std::string module, bool isDirectory)
+void PythonWalker::CodeGeneration::DeletePythonModule(std::filesystem::path path, std::string module, bool isDirectory)
 {
 	DeletePythonModule(path, PythonWalker::ParsePythonModuleString(module), isDirectory);
 }
 
-void PythonCodeGeneration::DeletePythonModule(std::filesystem::path path, PythonClassDefinition def, bool isDirectory)
+void PythonWalker::CodeGeneration::DeletePythonModule(std::filesystem::path path, PythonWalker::ClassDefinition def, bool isDirectory)
 {
 	std::vector<std::string> modules = PythonWalker::ParsePythonModuleString(def.Module);
 

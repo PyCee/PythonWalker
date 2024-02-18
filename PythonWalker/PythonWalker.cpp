@@ -1,19 +1,12 @@
 #include "PythonWalker.h"
 #include <iostream>
 #include <filesystem>
-#include "PythonFileManagement.h"
+#include "FileManagement.h"
 #include <format>
 
 #define strdup _strdup
 
-PythonWalker::PythonWalker()
-{
-}
-
-PythonWalker::PythonWalker(std::vector<std::string> additionalScriptsPaths)
-{
-    TearDown();
-
+void PythonWalker::Initialize() {
     PyConfig config{};
     config.pathconfig_warnings = 0;
     PyConfig_InitPythonConfig(&config);
@@ -22,59 +15,12 @@ PythonWalker::PythonWalker(std::vector<std::string> additionalScriptsPaths)
     {
         throw PythonModuleNotInitialized();
     }
-
-    PyObject* sysPath = PySys_GetObject((char*)"path");
-    for (std::string scriptsPath : additionalScriptsPaths) {
-        if (scriptsPath.empty()) {
-            continue;
-        }
-
-        // escape characters
-        //scriptsPath.replace(scriptsPath.begin(), scriptsPath.end(), "\\\\", "/");
-        //scriptsPath = std::quoted(scriptsPath);
-
-        ScriptsPaths.push_back(scriptsPath);
-
-        const char* path = scriptsPath.c_str();
-        PyObject* programName = PyUnicode_FromString(path);
-        PyList_Append(sysPath, programName);
-        //Py_DECREF(programName);
-    }
 }
-
-PythonWalker::~PythonWalker()
-{
-    TearDown();
-}
-
-
-void PythonWalker::TearDown()
-{
+void PythonWalker::Destroy() {
     if (Py_IsInitialized())
     {
         Py_Finalize();
     }
-}
-
-std::vector<PythonClassDefinition> PythonWalker::GetScripts(bool recursive, std::string baseClassName,
-    std::vector<std::string> excludeModules)
-{
-    std::vector<PythonClassDefinition> results;
-    for (std::string scriptPath : ScriptsPaths) {
-        std::vector<PythonClassDefinition> pathResults = PythonFileManagement::GetPythonClasses(scriptPath.c_str(), recursive);
-        results.insert(results.end(), pathResults.begin(), pathResults.end());
-    }
-    if (!baseClassName.empty())
-    {
-        results = PythonClassDefinition::FilterToDerivingFromClass(baseClassName, results);
-    }
-    if (excludeModules.size() > 0) {
-        for (std::string excludeModule : excludeModules) {
-            results = PythonClassDefinition::FilterOutModule(excludeModule, results);
-        }
-    }
-
-    return results;
 }
 
 std::vector<std::string> PythonWalker::ParsePythonModuleString(std::string module)
@@ -150,9 +96,9 @@ PyObject* PythonWalker::GetPythonClass(PyObject* pModule, const char* className)
 // https://stackoverflow.com/questions/25314774/python-c-api-iterate-through-classes-in-module
 // https://stackoverflow.com/questions/58075398/how-to-list-all-function-names-of-a-python-module-in-c
 // https://stackoverflow.com/questions/5520580/how-do-you-get-all-classes-defined-in-a-module-but-not-imported
-std::vector<PythonClassDefinition> PythonWalker::GetClassDefinitionsFromModuleDict(const char* moduleName)
+std::vector<PythonWalker::ClassDefinition> PythonWalker::GetClassDefinitionsFromModuleDict(const char* moduleName)
 {
-    std::vector<PythonClassDefinition> results;
+    std::vector<ClassDefinition> results;
     // At this point we have a python module, find classes within it
     PyObject* module = PythonWalker::LoadModule(moduleName);
     PyObject* dict = PyModule_GetDict(module);
@@ -168,7 +114,7 @@ std::vector<PythonClassDefinition> PythonWalker::GetClassDefinitionsFromModuleDi
                 continue;
             }
             const char* className = PyUnicode_AsUTF8(pKey);
-            results.push_back(PythonClassDefinition(moduleName, className));
+            results.push_back(ClassDefinition(moduleName, className));
         }
     }
     //Py_DECREF(dict);
@@ -178,7 +124,7 @@ std::vector<PythonClassDefinition> PythonWalker::GetClassDefinitionsFromModuleDi
 
 bool PythonWalker::MatchesModule(PyObject* pObject, const char* moduleName)
 {
-    PythonClassDefinition def(pObject);
+    ClassDefinition def(pObject);
     return strcmp(moduleName, def.Module.c_str()) == 0;
 }
 

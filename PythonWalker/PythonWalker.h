@@ -2,13 +2,13 @@
 #include <string>
 #include <vector>
 #include "PythonHelper.h"
-#include "PyWalkerObjectInstance.h"
-#include "PythonWalkerExceptions.h"
-#include "PythonClassDefinition.h"
-#include "PythonTypeConversions.h"
-#include "PythonCodeGeneration.h"
-#include "PythonLogging.h"
-#include "PythonFileManagement.h"
+#include "ObjectInstance.h"
+#include "Exceptions.h"
+#include "ClassDefinition.h"
+#include "TypeConversions.h"
+#include "CodeGeneration.h"
+#include "Logging.h"
+#include "FileManagement.h"
 /*
 * https://docs.python.org/3/c-api/
 * https://docs.python.org/3/extending/embedding.html
@@ -17,34 +17,21 @@
 * https://docs.python.org/3/reference/datamodel.html
 */
 
-class PythonWalker
-{
-private:
-public:
-	PythonWalker();
-	PythonWalker(std::vector<std::string> additionalScriptsPaths);
-	~PythonWalker();
+namespace PythonWalker {
+	void Initialize();
+	void Destroy();
 
-	void TearDown();
 
-	std::vector<std::string> ScriptsPaths;
-	/* Searches for python classes and modules in the path given in the PythonWalker setup
-	* @param recursive - Pass true if the search should dive into subfolders of the defined path
-	* @param baseClassName - If defined, the result will be filtered down to classes that are derived from the given class
-	*/
-	std::vector<PythonClassDefinition> GetScripts(bool recursive = false, std::string baseClassName="",
-		std::vector<std::string> excludeModules={});
-
-	static std::vector<std::string> ParsePythonModuleString(std::string module);
+	std::vector<std::string> ParsePythonModuleString(std::string module);
 	/* Loads python module into memory
 	* @param moduleName - Python file path
 	*/
-	static PyObject* LoadModule(std::string moduleName);
-	static PyObject* LoadModule(std::vector<std::string> moduleNames);
+	PyObject* LoadModule(std::string moduleName);
+	PyObject* LoadModule(std::vector<std::string> moduleNames);
 
-	static PyObject* LoadModuleDict(PyObject* pModule);
+	PyObject* LoadModuleDict(PyObject* pModule);
 	template <typename T>
-	static T GetModuleGlobal(PyObject* pModule, const char* variableName)
+	T GetModuleGlobal(PyObject* pModule, const char* variableName)
 	{
 		PyObject* dict = PythonWalker::LoadModuleDict(pModule);
 
@@ -56,7 +43,7 @@ public:
 		return GetValueFromPyObject<T>(pythonGlobalValue);
 	}
 	template <typename T>
-	static void SetModuleGlobal(PyObject* pModule, const char* variableName, T value)
+	void SetModuleGlobal(PyObject* pModule, const char* variableName, T value)
 	{
 		PyObject* dict = PythonWalker::LoadModuleDict(pModule);
 		PyDict_SetItemString(dict, variableName, GetPyObjectFromValue(value));
@@ -65,21 +52,21 @@ public:
 	/* Retrieves class definitions from the given module
 	* @param moduleName - Name of the module to check
 	*/
-	static std::vector<PythonClassDefinition> GetClassDefinitionsFromModuleDict(const char * moduleName);
-	static PyObject* GetPythonClass(const char * moduleName, const char* className);
-	static PyObject* GetPythonClass(PyObject* pModule, const char* className);
-	static bool MatchesModule(PyObject* pObject, const char* moduleName);
-	static PyObject* CreateObject(PyObject* module, const char* className);
-	static void CopyPyObjectValues(PyObject* src, PyObject* dest);
+	std::vector<ClassDefinition> GetClassDefinitionsFromModuleDict(const char* moduleName);
+	PyObject* GetPythonClass(const char* moduleName, const char* className);
+	PyObject* GetPythonClass(PyObject* pModule, const char* className);
+	bool MatchesModule(PyObject* pObject, const char* moduleName);
+	PyObject* CreateObject(PyObject* module, const char* className);
+	void CopyPyObjectValues(PyObject* src, PyObject* dest);
 	/*
 	* @param pythonObject - The object to run the function on
 	* @param functionName - Name of function in the python script to run
 	* @param keywords - Keyword arguments to pass into the function
 	*/
-	static PyObject* ExecuteFunction(PyObject* pythonObject, const char* functionName, PyObject* keywords=nullptr);
-};
+	PyObject* ExecuteFunction(PyObject* pythonObject, const char* functionName, PyObject* keywords = nullptr);
+}
 
-static PyObject* GetPyObjectFromValue(PyWalkerObjectInstance value)
+static PyObject* GetPyObjectFromValue(PythonWalker::ObjectInstance value)
 {
 	PyObject* dupObject = value.ClassDef.GetNewObject();
 	PythonWalker::CopyPyObjectValues(value.PyObjectInstance, dupObject);

@@ -21,25 +21,25 @@
     <ClInclude Include="PythonHelper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="PyWalkerObjectInstance.h">
+    <ClInclude Include="ObjectInstance.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="PythonWalkerExceptions.h">
+    <ClInclude Include="Exceptions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="PythonFileManagement.h">
+    <ClInclude Include="FileManagement.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="PythonClassDefinition.h">
+    <ClInclude Include="ClassDefinition.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="PythonTypeConversions.h">
+    <ClInclude Include="TypeConversions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="PythonCodeGeneration.h">
+    <ClInclude Include="CodeGeneration.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="PythonLogging.h">
+    <ClInclude Include="Logging.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -47,25 +47,25 @@
     <ClCompile Include="PythonWalker.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="PyWalkerObjectInstance.cpp">
+    <ClCompile Include="ObjectInstance.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="PythonWalkerExceptions.cpp">
+    <ClCompile Include="Exceptions.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="PythonFileManagement.cpp">
+    <ClCompile Include="FileManagement.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="PythonClassDefinition.cpp">
+    <ClCompile Include="ClassDefinition.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="PythonCodeGeneration.cpp">
+    <ClCompile Include="CodeGeneration.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="PythonHelper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="PythonLogging.cpp">
+    <ClCompile Include="Logging.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
