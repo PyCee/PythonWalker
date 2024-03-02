@@ -50,7 +50,7 @@ int main()
 
     PythonWalker::Logging::FlushLoggingContext();
 
-    std::string result = PythonWalker::GetFileContents(LogFilePath);
+    std::string result = PythonWalker::ScriptManager::GetFileContents(LogFilePath);
     std::cout << result << std::endl;
 
     PythonWalker::Logging::CloseLoggingContext();

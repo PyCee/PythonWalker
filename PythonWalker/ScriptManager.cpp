@@ -1,4 +1,4 @@
-#include "FileManager.h"
+#include "ScriptManager.h"
 #include <filesystem>
 #include <iostream>
 #include <fstream>
@@ -35,7 +35,7 @@ std::vector<PythonWalker::ClassDefinition> PythonWalker::ScriptManager::GetScrip
 {
     std::vector<ClassDefinition> results;
     for (std::string scriptPath : ScriptPaths) {
-        std::vector<ClassDefinition> pathResults = PythonWalker::GetPythonClasses(scriptPath.c_str(), recursive);
+        std::vector<ClassDefinition> pathResults = GetPythonClasses(scriptPath.c_str(), recursive);
         results.insert(results.end(), pathResults.begin(), pathResults.end());
     }
     if (!baseClassName.empty())
@@ -51,7 +51,7 @@ std::vector<PythonWalker::ClassDefinition> PythonWalker::ScriptManager::GetScrip
     return results;
 }
 
-std::vector<PythonWalker::ClassDefinition> PythonWalker::GetPythonClasses(const char* filepath, bool recursive,
+std::vector<PythonWalker::ClassDefinition> PythonWalker::ScriptManager::GetPythonClasses(const char* filepath, bool recursive,
     std::string extendedClassName, std::string modulePrepend)
 {
     std::vector<ClassDefinition> results;
@@ -62,13 +62,13 @@ std::vector<PythonWalker::ClassDefinition> PythonWalker::GetPythonClasses(const 
         if (entry.is_directory()) {
             if (recursive)
             {
-                std::vector<PythonWalker::ClassDefinition> recursiveResults = PythonWalker::GetPythonClasses(entry.path().string().c_str(),
+                std::vector<PythonWalker::ClassDefinition> recursiveResults = GetPythonClasses(entry.path().string().c_str(),
                     recursive, extendedClassName, moduleName);
                 results.insert(results.end(), recursiveResults.begin(), recursiveResults.end());
             }
             continue;
         }
-        if (!PythonWalker::IsPythonScript(entry)) {
+        if (!IsPythonScript(entry)) {
             continue;
         }
         std::vector<PythonWalker::ClassDefinition> moduleResults = PythonWalker::Module::GetClassDefinitions(moduleName.c_str());
@@ -76,12 +76,12 @@ std::vector<PythonWalker::ClassDefinition> PythonWalker::GetPythonClasses(const 
     }
     return results;
 }
-bool PythonWalker::IsPythonScript(std::filesystem::directory_entry entry)
+bool PythonWalker::ScriptManager::IsPythonScript(std::filesystem::directory_entry entry)
 {
     return entry.path().extension() == ".py";
 }
 
-std::ofstream PythonWalker::CreateFile(std::filesystem::path path, bool immediatlyClose)
+std::ofstream PythonWalker::ScriptManager::CreateFile(std::filesystem::path path, bool immediatlyClose)
 {
     std::filesystem::create_directories(path.parent_path());
     std::ofstream newFile(path.string(), std::ios::app);
@@ -90,19 +90,19 @@ std::ofstream PythonWalker::CreateFile(std::filesystem::path path, bool immediat
     }
     return newFile;
 }
-std::string PythonWalker::GetFileContents(std::filesystem::path filePath)
+std::string PythonWalker::ScriptManager::GetFileContents(std::filesystem::path filePath)
 {
     std::ifstream file(filePath.string());
     std::stringstream buffer;
     buffer << file.rdbuf();
     return buffer.str();
 }
-bool PythonWalker::HasFileChanged(std::filesystem::path filePath, std::string pastFileContents)
+bool PythonWalker::ScriptManager::HasFileChanged(std::filesystem::path filePath, std::string pastFileContents)
 {
     std::string newFileContents = GetFileContents(filePath);
     return newFileContents != pastFileContents;
 }
-void PythonWalker::ClearDirectory(std::filesystem::path directory)
+void PythonWalker::ScriptManager::ClearDirectory(std::filesystem::path directory)
 {
     for (const auto& entry : std::filesystem::directory_iterator(directory))
     {

@@ -49,7 +49,7 @@ void PythonWalker::CodeGeneration::DeletePythonModule(std::filesystem::path path
 		std::filesystem::remove_all(path);
 	}
 	catch (std::filesystem::filesystem_error e) {
-		// Catch error if the user has the fiule open when we're trying to delete
+		// Catch error if the user has the file open when we're trying to delete
 	}
 }
 

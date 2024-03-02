@@ -561,7 +561,7 @@ namespace CodeGenerationTestCases
 			std::vector<PythonWalker::ClassDefinition> scripts = scriptManager.GetScripts(true);
 			Assert::IsTrue(VectorContains<PythonWalker::ClassDefinition>(scripts, RobotDefinition));
 
-			std::string result = PythonWalker::GetFileContents(path);
+			std::string result = PythonWalker::ScriptManager::GetFileContents(path);
 			Assert::AreEqual(RobotCodeString, result);
 		}
 		TEST_METHOD(DeleteScriptModule)
@@ -625,17 +625,17 @@ namespace CodeGenerationTestCases
 			Assert::IsTrue(VectorContains<PythonWalker::ClassDefinition>(scripts, RobotDefinition));
 			Assert::IsTrue(VectorContains<PythonWalker::ClassDefinition>(scripts, RobotTwoDefinition));
 
-			std::string result = PythonWalker::GetFileContents(filePath);
+			std::string result = PythonWalker::ScriptManager::GetFileContents(filePath);
 			Assert::AreEqual(RobotCodeString + RobotTwoCodeString, result);
 		}
 		TEST_METHOD(OverwriteFileWithoutAppending)
 		{
 			std::filesystem::path filePath = PythonWalker::CodeGeneration::GeneratePythonClass(currentPath, RobotDefinition, RobotCodeString);
-			std::string firstGeneration = PythonWalker::GetFileContents(filePath);
+			std::string firstGeneration = PythonWalker::ScriptManager::GetFileContents(filePath);
 			Assert::AreEqual(firstGeneration, RobotCodeString);
 
 			PythonWalker::CodeGeneration::GeneratePythonClass(currentPath, RobotTwoDefinition, RobotTwoCodeString);
-			std::string secondGeneration = PythonWalker::GetFileContents(filePath);
+			std::string secondGeneration = PythonWalker::ScriptManager::GetFileContents(filePath);
 
 			Assert::AreNotEqual(firstGeneration, secondGeneration);
 			Assert::AreEqual(secondGeneration, RobotTwoCodeString);
@@ -644,8 +644,9 @@ namespace CodeGenerationTestCases
 		{
 			PythonWalker::CodeGeneration::GeneratePythonClass(currentPath, RobotDefinition, RobotCodeWithZeroErrorString);
 			TestRobotClass robot = RobotDefinition.GetNewObject();
-			float expected, result;
+			float expected = 0.0, result;
 
+			// Run the function and make sure it errors
 			auto func = [&] {robot.divide(1.0, 0.0); };
 			Assert::ExpectException<PythonWalker::PythonMethodError>(func);
 			
@@ -653,7 +654,7 @@ namespace CodeGenerationTestCases
 
 			robot.RegenerateFromScript();
 
-			expected = 0.0;
+			// Run the function without errors after regenerating it
 			result = robot.divide(1.0, 0.0);
 			Assert::AreEqual(expected, result);
 		}
@@ -661,13 +662,13 @@ namespace CodeGenerationTestCases
 		{
 			std::filesystem::path filePath = PythonWalker::CodeGeneration::GeneratePythonClass(currentPath, RobotDefinition, RobotCodeString);
 
-			std::string fileContents = PythonWalker::GetFileContents(filePath);
+			std::string fileContents = PythonWalker::ScriptManager::GetFileContents(filePath);
 
-			Assert::IsFalse(PythonWalker::HasFileChanged(filePath, fileContents));
+			Assert::IsFalse(PythonWalker::ScriptManager::HasFileChanged(filePath, fileContents));
 
 			PythonWalker::CodeGeneration::GeneratePythonClass(currentPath, RobotDefinition, RobotTwoCodeString);
 
-			Assert::IsTrue(PythonWalker::HasFileChanged(filePath, fileContents));
+			Assert::IsTrue(PythonWalker::ScriptManager::HasFileChanged(filePath, fileContents));
 		}
 		TEST_METHOD(AttemptToDeleteOpenFile)
 		{
@@ -676,12 +677,12 @@ namespace CodeGenerationTestCases
 			std::ofstream newFile(filePath.string(), std::ios::app);
 
 			// Check that this doesn't throw an error by trying to delete while the file is open
-			PythonWalker::CodeGeneration::DeletePythonModule(currentPath, RobotDefinition, true);
+			PythonWalker::CodeGeneration::DeletePythonModule(currentPath, RobotDefinition);
 
 			newFile.close();
 
 			// Confirm that we didn't delete the file
-			std::string fileContents = PythonWalker::GetFileContents(filePath);
+			std::string fileContents = PythonWalker::ScriptManager::GetFileContents(filePath);
 			Assert::IsTrue(fileContents == RobotCodeString);
 		}
 		TEST_METHOD(GenerateToOpenFile)
@@ -691,11 +692,11 @@ namespace CodeGenerationTestCases
 			std::ofstream newFile(filePath.string(), std::ios::app);
 
 			PythonWalker::CodeGeneration::GeneratePythonClass(currentPath, RobotDefinition, RobotTwoCodeString);
-			std::string fileContents = PythonWalker::GetFileContents(filePath);
+			std::string fileContents = PythonWalker::ScriptManager::GetFileContents(filePath);
 			Assert::AreEqual(RobotTwoCodeString, fileContents, L"Overwrote file contents when file was open");
 
 			PythonWalker::CodeGeneration::GeneratePythonClass(currentPath, RobotDefinition, RobotCodeString, true);
-			fileContents = PythonWalker::GetFileContents(filePath);
+			fileContents = PythonWalker::ScriptManager::GetFileContents(filePath);
 			Assert::AreEqual(RobotTwoCodeString + RobotCodeString, fileContents, L"Appended to file contents when file was open");
 
 			newFile.close();
@@ -743,7 +744,7 @@ namespace PythonLoggingTestCases
 		TEST_METHOD_CLEANUP(CleanupLogTesting)
 		{
 			PythonWalker::Logging::CloseLoggingContext();
-			PythonWalker::ClearDirectory(LogDirectory);
+			PythonWalker::ScriptManager::ClearDirectory(LogDirectory);
 		}
 		TEST_METHOD(PrintToLogFile)
 		{
@@ -751,7 +752,7 @@ namespace PythonLoggingTestCases
 			testSnake.printMessage(LoggingMessage);
 			PythonWalker::Logging::FlushLoggingContext();
 
-			std::string result = PythonWalker::GetFileContents(LogFilePath);
+			std::string result = PythonWalker::ScriptManager::GetFileContents(LogFilePath);
 			std::string expected = LoggingMessage + "\n";
 			Assert::AreEqual(expected, result);
 		}
@@ -764,7 +765,7 @@ namespace PythonLoggingTestCases
 			catch (PythonWalker::PythonMethodError e) { }
 			PythonWalker::Logging::FlushLoggingContext();
 
-			std::string result = PythonWalker::GetFileContents(LogFilePath);
+			std::string result = PythonWalker::ScriptManager::GetFileContents(LogFilePath);
 
 			// Check that the log file returned a type error
 			Assert::IsTrue(result.find("TypeError") != std::string::npos);
@@ -779,7 +780,7 @@ namespace PythonLoggingTestCases
 			testSnake.printMessage(LoggingMessage);
 			PythonWalker::Logging::FlushLoggingContext();
 
-			std::string result = PythonWalker::GetFileContents(LogFilePath);
+			std::string result = PythonWalker::ScriptManager::GetFileContents(LogFilePath);
 			std::string expected = LoggingMessage + "\n" + LoggingMessage + "\n";
 			Assert::AreEqual(expected, result);
 		}
@@ -789,13 +790,13 @@ namespace PythonLoggingTestCases
 			testSnake.printMessage(LoggingMessage);
 			PythonWalker::Logging::CloseLoggingContext();
 
-			std::string result = PythonWalker::GetFileContents(LogFilePath);
+			std::string result = PythonWalker::ScriptManager::GetFileContents(LogFilePath);
 			std::string expected = LoggingMessage + "\n";
 			Assert::AreEqual(expected, result);
 
 			std::filesystem::remove(LogFilePath);
 
-			result = PythonWalker::GetFileContents(LogFilePath);
+			result = PythonWalker::ScriptManager::GetFileContents(LogFilePath);
 			expected = "";
 			Assert::AreEqual(expected, result);
 		}
@@ -808,7 +809,7 @@ namespace PythonLoggingTestCases
 		TEST_METHOD_CLEANUP(CleanupReplayTesting)
 		{
 			PythonWalker::Logging::CloseLoggingContext();
-			PythonWalker::ClearDirectory(LogDirectory);
+			PythonWalker::ScriptManager::ClearDirectory(LogDirectory);
 		}
 		TEST_METHOD(SupportReplay)
 		{
@@ -825,7 +826,7 @@ namespace PythonLoggingTestCases
 			catch (PythonWalker::PythonMethodError e) { }
 			PythonWalker::Logging::FlushLoggingContext();
 
-			std::string fileContents = PythonWalker::GetFileContents(LogFilePath);
+			std::string fileContents = PythonWalker::ScriptManager::GetFileContents(LogFilePath);
 			std::wstring fileContentsOutput = std::wstring(fileContents.begin(), fileContents.end());
 			Assert::IsTrue(fileContents.find("ZeroDivisionError") != std::string::npos, fileContentsOutput.c_str());
 

@@ -8,7 +8,7 @@
 #include "TypeConversions.h"
 #include "CodeGeneration.h"
 #include "Logging.h"
-#include "FileManager.h"
+#include "ScriptManager.h"
 #include "TypingsGeneration.h"
 #include "Module.h"
 /*

@@ -1,7 +1,6 @@
 #include "PythonWalker.h"
 #include <iostream>
 #include <filesystem>
-#include "FileManager.h"
 #include <format>
 
 #define strdup _strdup

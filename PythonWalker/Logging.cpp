@@ -1,10 +1,9 @@
 #include "Logging.h"
 
 #include <fstream>
-#include "PythonWalker.h"
 #include <cstdio>
 #include <cstdlib>
-#include "FileManager.h"
+#include "PythonWalker.h"
 
 // TODO: error text https://stackoverflow.com/questions/1418015/how-to-get-python-exception-text
 
