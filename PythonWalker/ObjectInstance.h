@@ -16,11 +16,6 @@ namespace PythonWalker {
 		ObjectInstance(PyObject* pyObject);
 		~ObjectInstance();
 
-		template <typename T>
-		T ExecuteFunction(const char* functionName, PyObject* keywords = nullptr) {
-			PyObject* result = ExecuteFunctionInternal(functionName, keywords);
-			return GetValueFromPyObject<T>(result);
-		}
 		bool IsInitialized() const { return PyObjectInstance != nullptr; }
 		void RegenerateFromScript();
 

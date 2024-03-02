@@ -8,8 +8,8 @@
 class TestPyClass : public PythonWalker::ObjectInstance {
 public:
     using PythonWalker::ObjectInstance::ObjectInstance;
-    __PYW_TYPING_METHOD(void, printMessage, std::string, msg)
-        __PYW_TYPING_METHOD(void, issueFunction)
+    __PYW_TYPING_CLASS_METHOD(void, printMessage, std::string, msg)
+        __PYW_TYPING_CLASS_METHOD(void, issueFunction)
 };
 
 //https://w3.pppl.gov/~hammett/comp/python/LLNLDistribution11/CXX/Doc/cxx.htm

@@ -36,7 +36,7 @@ public:
 	};
 	__PYW_TYPING_VAR(double, X)
 	__PYW_TYPING_VAR(double, Y)
-	__PYW_TYPING_METHOD(double, pythag)
+		__PYW_TYPING_CLASS_METHOD(double, pythag)
 };
 
 class TestPythonClass : public PythonWalker::ObjectInstance {
@@ -57,25 +57,25 @@ public:
 
 	__PYW_TYPING_VAR(int, fakeInt)
 
-	__PYW_TYPING_METHOD(void, increaseAgeByOne)
-	__PYW_TYPING_METHOD(void, functionThatHitsTypeError)
-	__PYW_TYPING_METHOD(double, calculateTerrariumArea)
-	__PYW_TYPING_METHOD(void, changeName, const char*, newName)
-	__PYW_TYPING_METHOD(double, AddThreeParametersTogether, int, a, float, b, double, c)
+	__PYW_TYPING_CLASS_METHOD(void, increaseAgeByOne)
+		__PYW_TYPING_CLASS_METHOD(void, functionThatHitsTypeError)
+		__PYW_TYPING_CLASS_METHOD(double, calculateTerrariumArea)
+		__PYW_TYPING_CLASS_METHOD(void, changeName, const char*, newName)
+		__PYW_TYPING_CLASS_METHOD(double, AddThreeParametersTogether, int, a, float, b, double, c)
 
 	// Inherently checks that we can overload function parameters like this,
 	//   which end up calling into the same python function.
-	__PYW_TYPING_METHOD(double, AddNumbersTogether, std::vector<double>, numbers)
-	__PYW_TYPING_METHOD(double, AddNumbersTogether, std::list<double>, numbers)
-	__PYW_TYPING_METHOD(std::vector<const char *>, getFriends)
-	__PYW_TYPING_METHOD(std::vector<int>, countToFive)
+		__PYW_TYPING_CLASS_METHOD(double, AddNumbersTogether, std::vector<double>, numbers)
+		__PYW_TYPING_CLASS_METHOD(double, AddNumbersTogether, std::list<double>, numbers)
+		__PYW_TYPING_CLASS_METHOD(std::vector<const char *>, getFriends)
+		__PYW_TYPING_CLASS_METHOD(std::vector<int>, countToFive)
 	
-	__PYW_TYPING_METHOD(int, getGlobalVar)
-	__PYW_TYPING_METHOD(void, setGlobalVar, int, value)
-	__PYW_TYPING_METHOD(void, fakeFunction)
-	__PYW_TYPING_METHOD(void, noParamFunction, int, fakeParam)
-	__PYW_TYPING_METHOD(void, printMessage, std::string, msg)
-	__PYW_TYPING_METHOD(double, GetPositionXIndirectly)
+		__PYW_TYPING_CLASS_METHOD(int, getGlobalVar)
+		__PYW_TYPING_CLASS_METHOD(void, setGlobalVar, int, value)
+		__PYW_TYPING_CLASS_METHOD(void, fakeFunction)
+		__PYW_TYPING_CLASS_METHOD(void, noParamFunction, int, fakeParam)
+		__PYW_TYPING_CLASS_METHOD(void, printMessage, std::string, msg)
+		__PYW_TYPING_CLASS_METHOD(double, GetPositionXIndirectly)
 };
 class TestRobotClass : public PythonWalker::ObjectInstance {
 public:
@@ -83,8 +83,12 @@ public:
 
 	TestRobotClass() : PythonWalker::ObjectInstance("GeneratedFiles.Robot", "Robot") {};
 	__PYW_TYPING_VAR(int, age)
-	__PYW_TYPING_METHOD(float, divide, float, dividend, float, divisor)
+	__PYW_TYPING_CLASS_METHOD(float, divide, float, dividend, float, divisor)
 };
+
+__PYW_TYPING_METHOD("TestModule", void, moduleFunctionMultplyGlobalByTwo)
+__PYW_TYPING_METHOD("TestModule", std::string, moduleFunctionReturnHelloWorld)
+__PYW_TYPING_METHOD("TestModule", int, moduleFunctionMultply, int, num1, int, num2)
 
 std::filesystem::path currentPath = std::filesystem::current_path();
 std::string currentPathString = currentPath.make_preferred().string();
@@ -134,37 +138,29 @@ namespace PythonInterfaceTestCases
 		TEST_METHOD(SetModuleGlobalViaFunction)
 		{
 			int gloVar = 2;
-			int doubleGloVar = gloVar * 2;
+			int expected = gloVar * 2;
 			PyObject* module = PythonWalker::Module::Load("TestModule");
 
 			PythonWalker::Module::SetGlobal<int>(module, "gloVar", gloVar);
 			Assert::AreEqual(gloVar, PythonWalker::Module::GetGlobal<int>(module, "gloVal"));
 
-			PythonWalker::ExecuteFunction(module, "moduleFunctionMultplyGlobalByTwo");
+			moduleFunctionMultplyGlobalByTwo();
+
 			int result = PythonWalker::Module::GetGlobal<int>(module, "gloVar");
-			Assert::AreEqual(doubleGloVar, result);
+			Assert::AreEqual(expected, result);
 		}
 
 		TEST_METHOD(RunModuleFunctionWithReturn)
 		{
 			std::string expected = "HelloWorld";
-			PyObject* module = PythonWalker::Module::Load("TestModule");
-
-			PyObject* pyResult = PythonWalker::ExecuteFunction(module, "moduleFunctionReturnHelloWorld");
-			std::string result = PythonWalker::GetValueFromPyObject<std::string>(pyResult);
+			std::string result = moduleFunctionReturnHelloWorld();
 			Assert::AreEqual(expected, result);
 		}
 
 		TEST_METHOD(RunModuleFunctionWithParameters)
 		{
-			int expected = 6;
-			PyObject* module = PythonWalker::Module::Load("TestModule");
-			
-			PyObject* keywords = PyDict_New();
-			PyDict_SetItemString(keywords, "num1", PythonWalker::GetPyObjectFromValue(2));
-			PyDict_SetItemString(keywords, "num2", PythonWalker::GetPyObjectFromValue(3));
-			PyObject* pyResult = PythonWalker::ExecuteFunction(module, "moduleFunctionMultply", keywords);
-			int result = PythonWalker::GetValueFromPyObject<int>(pyResult);
+			int num1 = 2, num2 = 3, expected = num1 * num2;
+			int result = moduleFunctionMultply(num1, num2);
 			Assert::AreEqual(expected, result);
 		}
 	};

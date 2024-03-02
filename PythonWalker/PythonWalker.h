@@ -31,6 +31,9 @@ namespace PythonWalker {
 	* @param keywords - Keyword arguments to pass into the function
 	*/
 	PyObject* ExecuteFunction(PyObject* pythonObject, const char* functionName, PyObject* keywords = nullptr);
+
+	PyObject* GetPyObjectMethodContainer(std::string moduleName);
+	PyObject* GetPyObjectMethodContainer(PyObject* pyObject);
 }
 
 static PyObject* GetPyObjectFromValue(PythonWalker::ObjectInstance value)

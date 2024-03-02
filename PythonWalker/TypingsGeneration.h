@@ -99,13 +99,23 @@
 #define __GEN_PYTHON_FUNCTION_IF_NOT_VOID__(...) __GEN_PYTHON_FUNCTION_GET_SECOND_PARAM(__VA_ARGS__)
 #define __GEN_PYTHON_FUNCTION_GET_SECOND_PARAM(x1, x2, ...) x2
 
-#define __PYW_TYPING_METHOD(RETURN_TYPE, FUNCTION_NAME, ...)												\
-	public: RETURN_TYPE FUNCTION_NAME(																		\
+
+namespace PythonWalker {
+	PyObject* GetPyObjectMethodContainer(std::string moduleName);
+	PyObject* GetPyObjectMethodContainer(PyObject* pyObject);
+}
+
+#define __PYW_TYPING_METHOD(PYOBJECT, RETURN_TYPE, FUNCTION_NAME, ...)												\
+	RETURN_TYPE FUNCTION_NAME(																		\
 		DOUBLE_APPLY(__GEN_PYTHON_FUNCTION_KEYWORD_PARAMETER, __GEN_PYTHON_FUNCTION_PARENTHESIS_COMMA, __VA_ARGS__) ) {	\
+		PyObject* container = PythonWalker::GetPyObjectMethodContainer(PYOBJECT); \
 		PyObject* keywords = PyDict_New();																	\
 		DOUBLE_APPLY(__GEN_PYTHON_FUNCTION_KEYWORD_ENTRY, __GEN_PYTHON_NOTHING, __VA_ARGS__)								\
-		__GEN_PYTHON_FUNCTION_IF_NOT_VOID(RETURN_TYPE, RETURN_TYPE result = )								\
-			ExecuteFunction<RETURN_TYPE>(#FUNCTION_NAME, keywords);														\
+		__GEN_PYTHON_FUNCTION_IF_NOT_VOID(RETURN_TYPE, PyObject* result = )								\
+			PythonWalker::ExecuteFunction(container, #FUNCTION_NAME, keywords);														\
 		Py_DECREF(keywords);																				\
-		return __GEN_PYTHON_FUNCTION_IF_NOT_VOID(RETURN_TYPE, result);										\
+		return __GEN_PYTHON_FUNCTION_IF_NOT_VOID(RETURN_TYPE, PythonWalker::GetValueFromPyObject<RETURN_TYPE>(result););										\
 	}
+
+#define __PYW_TYPING_CLASS_METHOD(RETURN_TYPE, FUNCTION_NAME, ...) __PYW_TYPING_METHOD(PyObjectInstance, RETURN_TYPE, FUNCTION_NAME, __VA_ARGS__)
+

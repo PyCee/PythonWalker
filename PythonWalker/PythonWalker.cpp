@@ -21,9 +21,6 @@ void PythonWalker::Destroy() {
         Py_Finalize();
     }
 }
-
-
-
 PyObject* PythonWalker::CreateObject(PyObject* pModule, const char* className)
 {
     PyObject* pythonClass = Module::GetPythonClass(pModule, className);
@@ -80,4 +77,12 @@ PyObject* PythonWalker::ExecuteFunction(PyObject* pythonObject, const char* func
     //Py_DECREF(method);
 
     return value;
+}
+
+
+PyObject* PythonWalker::GetPyObjectMethodContainer(std::string moduleName) {
+    return PythonWalker::Module::Load(moduleName);
+}
+PyObject* PythonWalker::GetPyObjectMethodContainer(PyObject* pyObject) {
+    return pyObject;
 }

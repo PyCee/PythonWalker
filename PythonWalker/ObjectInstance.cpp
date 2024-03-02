@@ -28,7 +28,3 @@ void PythonWalker::ObjectInstance::RegenerateFromScript()
 	PyObjectInstance = ClassDef.GetNewObject();
 	PythonWalker::CopyPyObjectValues(regenPyObject, PyObjectInstance);
 }
-PyObject* PythonWalker::ObjectInstance::ExecuteFunctionInternal(const char* functionName, PyObject* keywords)
-{
-	return PythonWalker::ExecuteFunction(PyObjectInstance, functionName, keywords);
-}
