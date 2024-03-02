@@ -18,6 +18,7 @@
 		SetPythonVariable<TYPE>(#VARIABLE_NAME, value);					\
 	}
 
+	/* Macro for generating a variable within a class that is accessible between python and C++ */
 #define __PYW_TYPING_VAR(TYPE, VARIABLE_NAME)						\
 	private: TYPE __GEN_PYTHON_VARIABLE_INTERNAL_NAME(VARIABLE_NAME) = {};	\
 	public:																\
@@ -105,6 +106,13 @@ namespace PythonWalker {
 	PyObject* GetPyObjectDataContainer(PyObject* pyObject);
 }
 
+/* Macro for generating a function that calls into an equivalent python method
+	Example usage: __PYW_TYPING_METHOD(moduleName, int, addTogether, int, num1, int, num2)
+	@param PYOBJECT - The object containing the method. Should be either the class instance or the module, depending on method scope. May be the name of the module
+	@param RETURN_TYPE - The return type of the method.
+	@param FUNCTION_NAME - The resulting name of the function. Must match the name in python.
+	@param ... - Defines the parameters for the method. Must match the method parameter names in python. Pass in like
+*/
 #define __PYW_TYPING_METHOD(PYOBJECT, RETURN_TYPE, FUNCTION_NAME, ...)												\
 	RETURN_TYPE FUNCTION_NAME(																		\
 		DOUBLE_APPLY(__GEN_PYTHON_FUNCTION_KEYWORD_PARAMETER, __GEN_PYTHON_FUNCTION_PARENTHESIS_COMMA, __VA_ARGS__) ) {	\
@@ -117,5 +125,8 @@ namespace PythonWalker {
 		return __GEN_PYTHON_FUNCTION_IF_NOT_VOID(RETURN_TYPE, PythonWalker::GetValueFromPyObject<RETURN_TYPE>(result););										\
 	}
 
+/* Macro for generating a function within a class, for mirroring a python class. Similar to __PYW_TYPING_METHOD.
+
+*/
 #define __PYW_TYPING_CLASS_METHOD(RETURN_TYPE, FUNCTION_NAME, ...) __PYW_TYPING_METHOD(PyObjectInstance, RETURN_TYPE, FUNCTION_NAME, __VA_ARGS__)
 
