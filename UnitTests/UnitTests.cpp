@@ -750,7 +750,14 @@ namespace PythonLoggingTestCases
 		}
 		TEST_METHOD(PrintToLogFile)
 		{
+			// Make sure the log file starts not created created
+			Assert::IsFalse(std::filesystem::exists(LogFilePath));
+
 			PythonWalker::Logging::StartLoggingContext(LogFilePath);
+
+			// Make sure the log file was created
+			Assert::IsTrue(std::filesystem::exists(LogFilePath));
+
 			testSnake.printMessage(LoggingMessage);
 			PythonWalker::Logging::FlushLoggingContext();
 
@@ -798,9 +805,27 @@ namespace PythonLoggingTestCases
 
 			std::filesystem::remove(LogFilePath);
 
-			result = PythonWalker::ScriptManager::GetFileContents(LogFilePath);
-			expected = "";
+			Assert::IsFalse(std::filesystem::exists(LogFilePath));
+		}
+		TEST_METHOD(LogToTemporaryFile)
+		{
+			PythonWalker::Logging::StartLoggingContext();
+			std::filesystem::path tempLogPath = PythonWalker::Logging::GetCurrentLogFile();
+
+			testSnake.printMessage(LoggingMessage);
+
+			PythonWalker::Logging::FlushLoggingContext();
+
+			std::string result = PythonWalker::ScriptManager::GetFileContents(tempLogPath);
+
+			// Confirm we logged the message when we didn't pass in a file
+			std::string expected = LoggingMessage + "\n";
 			Assert::AreEqual(expected, result);
+
+			PythonWalker::Logging::CloseLoggingContext();
+
+			// Confirm the temp file is deleted after closing the logging context
+			Assert::IsFalse(std::filesystem::exists(tempLogPath));
 		}
 	};
 	TEST_CLASS(PythonReplayTestClass)

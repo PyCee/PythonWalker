@@ -6,7 +6,9 @@
 #include "PythonWalker.h"
 
 // TODO: error text https://stackoverflow.com/questions/1418015/how-to-get-python-exception-text
-
+static std::string tempLogFileName = "TempLogFile";
+static std::filesystem::path tempLogFilePath = std::filesystem::current_path() / tempLogFileName;
+static std::filesystem::path currentLogPath;
 static void SetPythonSystemVar(std::string sysVar, std::string newVal)
 {
 	PyRun_SimpleString("import sys");
@@ -15,7 +17,11 @@ static void SetPythonSystemVar(std::string sysVar, std::string newVal)
 }
 void PythonWalker::Logging::StartLoggingContext(std::filesystem::path path)
 {
-	std::string openFileString = "open(r\"" + path.string() + "\", 'a')";
+	currentLogPath = path;
+	if (currentLogPath == "") {
+		currentLogPath = tempLogFilePath;
+	}
+	std::string openFileString = "open(r\"" + currentLogPath.string() + "\", 'a')";
 	SetPythonSystemVar("sys.stdout", openFileString);
 	SetPythonSystemVar("sys.stderr", openFileString);
 }
@@ -24,10 +30,19 @@ void PythonWalker::Logging::CloseLoggingContext()
 {
 	SetPythonSystemVar("sys.stdout", "sys.__stdout__");
 	SetPythonSystemVar("sys.stderr", "sys.__stderr__");
+	if (currentLogPath == tempLogFilePath) {
+		std::filesystem::remove(currentLogPath);
+	}
+	currentLogPath = "";
 }
 
 void PythonWalker::Logging::FlushLoggingContext()
 {
 	PyRun_SimpleString("sys.stdout.flush()");
 	PyRun_SimpleString("sys.stderr.flush()");
+}
+
+std::filesystem::path PythonWalker::Logging::GetCurrentLogFile()
+{
+	return currentLogPath;
 }
