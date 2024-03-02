@@ -32,8 +32,8 @@ namespace PythonWalker {
 	*/
 	PyObject* ExecuteFunction(PyObject* pythonObject, const char* functionName, PyObject* keywords = nullptr);
 
-	PyObject* GetPyObjectMethodContainer(std::string moduleName);
-	PyObject* GetPyObjectMethodContainer(PyObject* pyObject);
+	PyObject* GetPyObjectDataContainer(std::string moduleName);
+	PyObject* GetPyObjectDataContainer(PyObject* pyObject);
 }
 
 static PyObject* GetPyObjectFromValue(PythonWalker::ObjectInstance value)

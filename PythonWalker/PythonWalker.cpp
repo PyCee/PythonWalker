@@ -80,9 +80,9 @@ PyObject* PythonWalker::ExecuteFunction(PyObject* pythonObject, const char* func
 }
 
 
-PyObject* PythonWalker::GetPyObjectMethodContainer(std::string moduleName) {
+PyObject* PythonWalker::GetPyObjectDataContainer(std::string moduleName) {
     return PythonWalker::Module::Load(moduleName);
 }
-PyObject* PythonWalker::GetPyObjectMethodContainer(PyObject* pyObject) {
+PyObject* PythonWalker::GetPyObjectDataContainer(PyObject* pyObject) {
     return pyObject;
 }

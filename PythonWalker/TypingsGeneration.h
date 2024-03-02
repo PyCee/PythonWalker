@@ -101,14 +101,14 @@
 
 
 namespace PythonWalker {
-	PyObject* GetPyObjectMethodContainer(std::string moduleName);
-	PyObject* GetPyObjectMethodContainer(PyObject* pyObject);
+	PyObject* GetPyObjectDataContainer(std::string moduleName);
+	PyObject* GetPyObjectDataContainer(PyObject* pyObject);
 }
 
 #define __PYW_TYPING_METHOD(PYOBJECT, RETURN_TYPE, FUNCTION_NAME, ...)												\
 	RETURN_TYPE FUNCTION_NAME(																		\
 		DOUBLE_APPLY(__GEN_PYTHON_FUNCTION_KEYWORD_PARAMETER, __GEN_PYTHON_FUNCTION_PARENTHESIS_COMMA, __VA_ARGS__) ) {	\
-		PyObject* container = PythonWalker::GetPyObjectMethodContainer(PYOBJECT); \
+		PyObject* container = PythonWalker::GetPyObjectDataContainer(PYOBJECT); \
 		PyObject* keywords = PyDict_New();																	\
 		DOUBLE_APPLY(__GEN_PYTHON_FUNCTION_KEYWORD_ENTRY, __GEN_PYTHON_NOTHING, __VA_ARGS__)								\
 		__GEN_PYTHON_FUNCTION_IF_NOT_VOID(RETURN_TYPE, PyObject* result = )								\

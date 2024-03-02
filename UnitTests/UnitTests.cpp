@@ -86,8 +86,11 @@ public:
 	__PYW_TYPING_CLASS_METHOD(float, divide, float, dividend, float, divisor)
 };
 
+/* Python typing function that multiplies an internal global Python variable by two */
 __PYW_TYPING_METHOD("TestModule", void, moduleFunctionMultplyGlobalByTwo)
+/* Python typing function that returns a string */
 __PYW_TYPING_METHOD("TestModule", std::string, moduleFunctionReturnHelloWorld)
+/* Python typing function that takes two numbers and returns the result of them multiplied together */
 __PYW_TYPING_METHOD("TestModule", int, moduleFunctionMultply, int, num1, int, num2)
 
 std::filesystem::path currentPath = std::filesystem::current_path();
@@ -126,23 +129,26 @@ namespace PythonInterfaceTestCases
 		TEST_METHOD(GetAndSetModuleGlobal)
 		{
 			PyObject* module = PythonWalker::Module::Load("TestModule");
-			int gloVal1 = 1, gloVal2 = 2;
+			int gloVar1 = 1, gloVar2 = 2, gloVar3 = 3;
 
-			PythonWalker::Module::SetGlobal<int>(module, "gloVal", gloVal1);
-			Assert::AreEqual(gloVal1, PythonWalker::Module::GetGlobal<int>(module, "gloVal"));
+			PythonWalker::Module::SetGlobal<int>(module, "gloVar", gloVar1);
+			Assert::AreEqual(gloVar1, PythonWalker::Module::GetGlobal<int>(module, "gloVar"));
 
-			PythonWalker::Module::SetGlobal<int>(module, "gloVal", gloVal2);
-			Assert::AreEqual(gloVal2, PythonWalker::Module::GetGlobal<int>(module, "gloVal"));
+			PythonWalker::Module::SetGlobal<int>(module, "gloVar", gloVar2);
+			Assert::AreEqual(gloVar2, PythonWalker::Module::GetGlobal<int>(module, "gloVar"));
+
+			PythonWalker::Module::SetGlobal<int>("TestModule", "gloVar", gloVar3);
+			Assert::AreEqual(gloVar3, PythonWalker::Module::GetGlobal<int>("TestModule", "gloVar"));
 		}
 		
-		TEST_METHOD(SetModuleGlobalViaFunction)
+		TEST_METHOD(ModifyModuleGlobalViaFunction)
 		{
 			int gloVar = 2;
 			int expected = gloVar * 2;
 			PyObject* module = PythonWalker::Module::Load("TestModule");
 
 			PythonWalker::Module::SetGlobal<int>(module, "gloVar", gloVar);
-			Assert::AreEqual(gloVar, PythonWalker::Module::GetGlobal<int>(module, "gloVal"));
+			Assert::AreEqual(gloVar, PythonWalker::Module::GetGlobal<int>(module, "gloVar"));
 
 			moduleFunctionMultplyGlobalByTwo();
 

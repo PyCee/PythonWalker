@@ -6,6 +6,10 @@
 #include "ClassDefinition.h"
 #include "Exceptions.h"
 
+namespace PythonWalker {
+	PyObject* GetPyObjectDataContainer(std::string pModuleName);
+}
+
 namespace PythonWalker::Module {
 
 	std::vector<std::string> ParsePythonModuleString(std::string module);
@@ -29,10 +33,23 @@ namespace PythonWalker::Module {
 		return GetValueFromPyObject<T>(pythonGlobalValue);
 	}
 	template <typename T>
+	T GetGlobal(std::string pModuleName, const char* variableName)
+	{
+		PyObject* pModule = PythonWalker::GetPyObjectDataContainer(pModuleName);
+		return GetGlobal<T>(pModule, variableName);
+	}
+	template <typename T>
 	void SetGlobal(PyObject* pModule, const char* variableName, T value)
 	{
 		PyObject* dict = PythonWalker::Module::LoadDict(pModule);
 		PyDict_SetItemString(dict, variableName, GetPyObjectFromValue(value));
+	}
+
+	template <typename T>
+	void SetGlobal(std::string pModuleName, const char* variableName, T value)
+	{
+		PyObject* pModule = PythonWalker::GetPyObjectDataContainer(pModuleName);
+		return SetGlobal<T>(pModule, variableName, value);
 	}
 	/* Retrieves class definitions from the given module
 	* @param moduleName - Name of the module to check
