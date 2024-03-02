@@ -745,7 +745,7 @@ namespace PythonLoggingTestCases
 
 		TEST_METHOD_CLEANUP(CleanupLogTesting)
 		{
-			PythonWalker::Logging::CloseLoggingContext();
+			PythonWalker::Logging::CloseLoggingContext(true);
 			PythonWalker::ScriptManager::ClearDirectory(LogDirectory);
 		}
 		TEST_METHOD(PrintToLogFile)
@@ -783,7 +783,7 @@ namespace PythonLoggingTestCases
 		{
 			PythonWalker::Logging::StartLoggingContext(LogFilePath);
 			testSnake.printMessage(LoggingMessage);
-			PythonWalker::Logging::CloseLoggingContext();
+			PythonWalker::Logging::CloseLoggingContext(false);
 
 			PythonWalker::Logging::StartLoggingContext(LogFilePath);
 			testSnake.printMessage(LoggingMessage);
@@ -797,13 +797,13 @@ namespace PythonLoggingTestCases
 		{
 			PythonWalker::Logging::StartLoggingContext(LogFilePath);
 			testSnake.printMessage(LoggingMessage);
-			PythonWalker::Logging::CloseLoggingContext();
+			PythonWalker::Logging::FlushLoggingContext();
 
 			std::string result = PythonWalker::ScriptManager::GetFileContents(LogFilePath);
 			std::string expected = LoggingMessage + "\n";
 			Assert::AreEqual(expected, result);
 
-			std::filesystem::remove(LogFilePath);
+			PythonWalker::Logging::CloseLoggingContext(true);
 
 			Assert::IsFalse(std::filesystem::exists(LogFilePath));
 		}
@@ -826,6 +826,14 @@ namespace PythonLoggingTestCases
 
 			// Confirm the temp file is deleted after closing the logging context
 			Assert::IsFalse(std::filesystem::exists(tempLogPath));
+		}
+		TEST_METHOD(StartLoggingContextWhileOneIsOpen)
+		{
+			PythonWalker::Logging::StartLoggingContext(LogFilePath);
+
+			// Start a new logging context while the old one is still open
+			auto func = [] {PythonWalker::Logging::StartLoggingContext(); };
+			Assert::ExpectException<PythonWalker::PythonLoggingContextAlreadyOpen>(func);
 		}
 	};
 	TEST_CLASS(PythonReplayTestClass)

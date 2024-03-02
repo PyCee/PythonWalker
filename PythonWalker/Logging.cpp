@@ -17,6 +17,10 @@ static void SetPythonSystemVar(std::string sysVar, std::string newVal)
 }
 void PythonWalker::Logging::StartLoggingContext(std::filesystem::path path)
 {
+	if (GetCurrentLogFile().string().length() > 0) {
+		throw PythonLoggingContextAlreadyOpen(path.string(), GetCurrentLogFile().string());
+	}
+
 	currentLogPath = path;
 	if (currentLogPath == "") {
 		currentLogPath = tempLogFilePath;
@@ -26,11 +30,11 @@ void PythonWalker::Logging::StartLoggingContext(std::filesystem::path path)
 	SetPythonSystemVar("sys.stderr", openFileString);
 }
 
-void PythonWalker::Logging::CloseLoggingContext()
+void PythonWalker::Logging::CloseLoggingContext(bool deleteLogFile)
 {
 	SetPythonSystemVar("sys.stdout", "sys.__stdout__");
 	SetPythonSystemVar("sys.stderr", "sys.__stderr__");
-	if (currentLogPath == tempLogFilePath) {
+	if (deleteLogFile || currentLogPath == tempLogFilePath) {
 		std::filesystem::remove(currentLogPath);
 	}
 	currentLogPath = "";

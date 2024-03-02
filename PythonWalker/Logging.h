@@ -12,7 +12,7 @@ namespace PythonWalker {
 		*/
 		static void StartLoggingContext(std::filesystem::path logPath="");
 		/* Resets python standard outputs to their defaults. If using a temporary log file, deletes the file */
-		static void CloseLoggingContext();
+		static void CloseLoggingContext(bool deleteLogFile=false);
 		static void FlushLoggingContext();
 		static std::filesystem::path GetCurrentLogFile();
 	};

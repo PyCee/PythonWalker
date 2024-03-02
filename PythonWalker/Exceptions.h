@@ -44,4 +44,9 @@ namespace PythonWalker{
 	public:	PythonModuleDictionaryFailed() :
 		std::runtime_error("Module dictionary could not be created") {}
 	};
+	class PythonLoggingContextAlreadyOpen : public std::runtime_error
+	{
+	public:	PythonLoggingContextAlreadyOpen(std::string newLoggingFilePath, std::string oldLoggingFilePath) :
+		std::runtime_error(std::format("Cannot start logging to file %s when already logging to file %s", newLoggingFilePath, oldLoggingFilePath)) {}
+	};
 }
