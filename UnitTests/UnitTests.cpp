@@ -108,27 +108,65 @@ namespace PythonInterfaceTestCases
 		TestPythonClass testSnake;
 		TEST_METHOD(LoadModule)
 		{
-			PyObject* module = PythonWalker::LoadModule("TestSnake");
+			PyObject* module = PythonWalker::Module::Load("TestModule");
 			Assert::IsNotNull(module);
 		}
-		TEST_METHOD(GetModuleVariable)
+		TEST_METHOD(GetModuleGlobal)
 		{
-			PyObject* module = PythonWalker::LoadModule("TestSnake");
-			int gloVal1=1, gloVal2=2;
+			PyObject* module = PythonWalker::Module::Load("TestModule");
+			std::string helloWorld = "HelloWorld";
+			std::string globalValue = PythonWalker::Module::GetGlobal<std::string>(module, "helloWorld");
 
-			PythonWalker::SetModuleGlobal<int>(module, "gloVal", gloVal1);
-			Assert::AreEqual(gloVal1, PythonWalker::GetModuleGlobal<int>(module,"gloVal"));
-
-			PythonWalker::SetModuleGlobal<int>(module, "gloVal", gloVal2);
-			Assert::AreEqual(gloVal2, PythonWalker::GetModuleGlobal<int>(module, "gloVal"));
+			Assert::AreEqual(helloWorld, globalValue);
 		}
-		/*
-		TEST_METHOD(RunModuleFunction)
+		TEST_METHOD(GetAndSetModuleGlobal)
 		{
-			// Would this even be useful? Yes, make it
-			Assert::IsTrue(true);
+			PyObject* module = PythonWalker::Module::Load("TestModule");
+			int gloVal1 = 1, gloVal2 = 2;
+
+			PythonWalker::Module::SetGlobal<int>(module, "gloVal", gloVal1);
+			Assert::AreEqual(gloVal1, PythonWalker::Module::GetGlobal<int>(module, "gloVal"));
+
+			PythonWalker::Module::SetGlobal<int>(module, "gloVal", gloVal2);
+			Assert::AreEqual(gloVal2, PythonWalker::Module::GetGlobal<int>(module, "gloVal"));
 		}
-		*/
+		
+		TEST_METHOD(SetModuleGlobalViaFunction)
+		{
+			int gloVar = 2;
+			int doubleGloVar = gloVar * 2;
+			PyObject* module = PythonWalker::Module::Load("TestModule");
+
+			PythonWalker::Module::SetGlobal<int>(module, "gloVar", gloVar);
+			Assert::AreEqual(gloVar, PythonWalker::Module::GetGlobal<int>(module, "gloVal"));
+
+			PythonWalker::ExecuteFunction(module, "moduleFunctionMultplyGlobalByTwo");
+			int result = PythonWalker::Module::GetGlobal<int>(module, "gloVar");
+			Assert::AreEqual(doubleGloVar, result);
+		}
+
+		TEST_METHOD(RunModuleFunctionWithReturn)
+		{
+			std::string expected = "HelloWorld";
+			PyObject* module = PythonWalker::Module::Load("TestModule");
+
+			PyObject* pyResult = PythonWalker::ExecuteFunction(module, "moduleFunctionReturnHelloWorld");
+			std::string result = PythonWalker::GetValueFromPyObject<std::string>(pyResult);
+			Assert::AreEqual(expected, result);
+		}
+
+		TEST_METHOD(RunModuleFunctionWithParameters)
+		{
+			int expected = 6;
+			PyObject* module = PythonWalker::Module::Load("TestModule");
+			
+			PyObject* keywords = PyDict_New();
+			PyDict_SetItemString(keywords, "num1", PythonWalker::GetPyObjectFromValue(2));
+			PyDict_SetItemString(keywords, "num2", PythonWalker::GetPyObjectFromValue(3));
+			PyObject* pyResult = PythonWalker::ExecuteFunction(module, "moduleFunctionMultply", keywords);
+			int result = PythonWalker::GetValueFromPyObject<int>(pyResult);
+			Assert::AreEqual(expected, result);
+		}
 	};
 	TEST_CLASS(PythonObjectInterfaceTestClass)
 	{
@@ -755,7 +793,7 @@ namespace PythonLoggingTestCases
 			std::string expected = LoggingMessage + "\n";
 			Assert::AreEqual(expected, result);
 
-			PythonWalker::ClearFile(LogFilePath);
+			std::filesystem::remove(LogFilePath);
 
 			result = PythonWalker::GetFileContents(LogFilePath);
 			expected = "";

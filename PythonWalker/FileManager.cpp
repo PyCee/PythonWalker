@@ -71,7 +71,7 @@ std::vector<PythonWalker::ClassDefinition> PythonWalker::GetPythonClasses(const 
         if (!PythonWalker::IsPythonScript(entry)) {
             continue;
         }
-        std::vector<PythonWalker::ClassDefinition> moduleResults = PythonWalker::GetClassDefinitionsFromModuleDict(moduleName.c_str());
+        std::vector<PythonWalker::ClassDefinition> moduleResults = PythonWalker::Module::GetClassDefinitions(moduleName.c_str());
         results.insert(results.end(), moduleResults.begin(), moduleResults.end());
     }
     return results;
@@ -89,11 +89,6 @@ std::ofstream PythonWalker::CreateFile(std::filesystem::path path, bool immediat
         newFile.close();
     }
     return newFile;
-}
-void PythonWalker::ClearFile(std::filesystem::path path)
-{
-    std::ofstream newFile(path.string());
-    newFile.close();
 }
 std::string PythonWalker::GetFileContents(std::filesystem::path filePath)
 {

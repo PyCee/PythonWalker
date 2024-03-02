@@ -30,25 +30,32 @@ int main()
     PythonWalker::Initialize();
     PythonWalker::ScriptManager scriptManager(paths);
 
-    std::vector<PythonWalker::ClassDefinition> test = scriptManager.GetScripts();
-    TestPyClass testSnake = TestPyClass("TestSnake", "TestSnake");
+    int gloVal = 3;
+    PyObject* module = PythonWalker::Module::Load("TestModule");
 
-    
-    PythonWalker::CodeGeneration::DeletePythonModule(currentPath, "GeneratedFiles", true);
 
-    std::filesystem::path filePath = PythonWalker::CodeGeneration::GeneratePythonClass(currentPath, "GeneratedFiles.Robot", RobotCodeString);
+    std::filesystem::path LogFilePath = currentPath / "LogFile.txt";
 
-    std::string fileContents = PythonWalker::GetFileContents(filePath);
+    PythonWalker::Logging::StartLoggingContext(LogFilePath);
 
-    testSnake.printMessage("my message");
 
-    /*
-    while (true) {
-        if (PythonWalker::HasFileChanged(filePath, RobotCodeString)) {
-            break;
-        }
-    }
-    */
+    //PythonWalker::Module::SetGlobal<int>(module, "gloVal", gloVal);
+    std::cout << PythonWalker::Module::GetGlobal<std::string>(module, "helloWorld") << std::endl;
+
+    std::cout << PythonWalker::Module::GetGlobal<int>(module, "gloVar") << std::endl;
+    PythonWalker::ExecuteFunction(module, "moduleFunctionMultplyGlobalByTwo");
+    PythonWalker::ExecuteFunction(module, "moduleFunctionMultplyGlobalByTwo");
+    //Assert::AreEqual(gloVal * 2, PythonWalker::Module::GetGlobal<int>(module, "gloVal"));
+    std::cout << PythonWalker::Module::GetGlobal<int>(module, "gloVar") << std::endl;
+
+    PythonWalker::Logging::FlushLoggingContext();
+
+    std::string result = PythonWalker::GetFileContents(LogFilePath);
+    std::cout << result << std::endl;
+
+    PythonWalker::Logging::CloseLoggingContext();
+    std::filesystem::remove(LogFilePath);
+
 
 
     //TODO better handling python errors

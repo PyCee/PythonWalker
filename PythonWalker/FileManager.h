@@ -24,6 +24,7 @@ namespace PythonWalker {
 	std::vector<ClassDefinition> GetPythonClasses(const char* filepath, bool recursive = false, std::string extendedClassName = "", std::string modulePrepend = "");
 	bool IsPythonScript(std::filesystem::directory_entry entry);
 	std::ofstream CreateFile(std::filesystem::path path, bool immediatlyClose = false);
+	void EraseFile(std::filesystem::path path);
 	void ClearFile(std::filesystem::path path);
 	std::string GetFileContents(std::filesystem::path filePath);
 	bool HasFileChanged(std::filesystem::path filePath, std::string pastFileContents);

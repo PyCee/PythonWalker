@@ -21,13 +21,13 @@ std::filesystem::path PythonWalker::CodeGeneration::GeneratePythonClass(std::fil
 	std::ofstream newFile(path.string(), append ? std::ios::app : std::ios::out);
 	newFile << code;
 	newFile.close();
-	PyImport_ReloadModule(PythonWalker::LoadModule(modules));
+	PyImport_ReloadModule(PythonWalker::Module::Load(modules));
 	return path;
 }
 
 std::filesystem::path PythonWalker::CodeGeneration::GeneratePythonClass(std::filesystem::path path, std::string module, std::string code, bool append)
 {
-	return GeneratePythonClass(path, PythonWalker::ParsePythonModuleString(module), code, append);
+	return GeneratePythonClass(path, PythonWalker::Module::ParsePythonModuleString(module), code, append);
 }
 
 std::filesystem::path PythonWalker::CodeGeneration::GeneratePythonClass(std::filesystem::path path, PythonWalker::ClassDefinition def, std::string code, bool append)
@@ -55,12 +55,12 @@ void PythonWalker::CodeGeneration::DeletePythonModule(std::filesystem::path path
 
 void PythonWalker::CodeGeneration::DeletePythonModule(std::filesystem::path path, std::string module, bool isDirectory)
 {
-	DeletePythonModule(path, PythonWalker::ParsePythonModuleString(module), isDirectory);
+	DeletePythonModule(path, PythonWalker::Module::ParsePythonModuleString(module), isDirectory);
 }
 
 void PythonWalker::CodeGeneration::DeletePythonModule(std::filesystem::path path, PythonWalker::ClassDefinition def, bool isDirectory)
 {
-	std::vector<std::string> modules = PythonWalker::ParsePythonModuleString(def.Module);
+	std::vector<std::string> modules = PythonWalker::Module::ParsePythonModuleString(def.Module);
 
 	// If we are clearing the directory, pop the last module since that's a specific filename
 	if (isDirectory) {

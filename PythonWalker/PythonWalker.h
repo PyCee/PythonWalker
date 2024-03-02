@@ -10,6 +10,7 @@
 #include "Logging.h"
 #include "FileManager.h"
 #include "TypingsGeneration.h"
+#include "Module.h"
 /*
 * https://docs.python.org/3/c-api/
 * https://docs.python.org/3/extending/embedding.html
@@ -22,41 +23,6 @@ namespace PythonWalker {
 	void Initialize();
 	void Destroy();
 
-
-	std::vector<std::string> ParsePythonModuleString(std::string module);
-	/* Loads python module into memory
-	* @param moduleName - Python file path
-	*/
-	PyObject* LoadModule(std::string moduleName);
-	PyObject* LoadModule(std::vector<std::string> moduleNames);
-
-	PyObject* LoadModuleDict(PyObject* pModule);
-	template <typename T>
-	T GetModuleGlobal(PyObject* pModule, const char* variableName)
-	{
-		PyObject* dict = PythonWalker::LoadModuleDict(pModule);
-
-		PyObject* pythonGlobalValue = PyDict_GetItemString(dict, variableName);
-		if (pythonGlobalValue == nullptr) {
-			PyErr_Print();
-			throw PythonObjectDNE(variableName);
-		}
-		return GetValueFromPyObject<T>(pythonGlobalValue);
-	}
-	template <typename T>
-	void SetModuleGlobal(PyObject* pModule, const char* variableName, T value)
-	{
-		PyObject* dict = PythonWalker::LoadModuleDict(pModule);
-		PyDict_SetItemString(dict, variableName, GetPyObjectFromValue(value));
-	}
-
-	/* Retrieves class definitions from the given module
-	* @param moduleName - Name of the module to check
-	*/
-	std::vector<ClassDefinition> GetClassDefinitionsFromModuleDict(const char* moduleName);
-	PyObject* GetPythonClass(const char* moduleName, const char* className);
-	PyObject* GetPythonClass(PyObject* pModule, const char* className);
-	bool MatchesModule(PyObject* pObject, const char* moduleName);
 	PyObject* CreateObject(PyObject* module, const char* className);
 	void CopyPyObjectValues(PyObject* src, PyObject* dest);
 	/*

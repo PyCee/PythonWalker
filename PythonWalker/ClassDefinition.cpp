@@ -16,11 +16,11 @@ PythonWalker::ClassDefinition::ClassDefinition(PyObject* pyObject)
 }
 PyObject* PythonWalker::ClassDefinition::GetPythonClass() const
 {
-	return PythonWalker::GetPythonClass(Module.c_str(), ClassName.c_str());
+	return PythonWalker::Module::GetPythonClass(Module.c_str(), ClassName.c_str());
 }
 PyObject* PythonWalker::ClassDefinition::GetNewObject() const
 {
-    PyObject* pModule = PythonWalker::LoadModule(Module);
+    PyObject* pModule = PythonWalker::Module::Load(Module);
     return PythonWalker::CreateObject(pModule, ClassName.c_str());
 }
 bool PythonWalker::ClassDefinition::IsValid() const
@@ -29,7 +29,7 @@ bool PythonWalker::ClassDefinition::IsValid() const
 }
 bool PythonWalker::ClassDefinition::IncludesModule(std::string moduleName)
 {
-    std::vector<std::string> modules = PythonWalker::ParsePythonModuleString(Module);
+    std::vector<std::string> modules = PythonWalker::Module::ParsePythonModuleString(Module);
     return std::find(modules.begin(), modules.end(), moduleName) != modules.end();
 }
 std::vector<PythonWalker::ClassDefinition>

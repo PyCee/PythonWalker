@@ -25,6 +25,7 @@
     <Compile Include="Subfolder\TestMushroom.py" />
     <Compile Include="Subfolder\TestOregano.py" />
     <Compile Include="TestOysterMushroom.py" />
+    <Compile Include="TestModule.py" />
     <Compile Include="TestThaiBasil.py" />
     <Compile Include="TestBasil.py" />
     <Compile Include="TestPlant.py" />

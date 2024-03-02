@@ -178,6 +178,7 @@
     <ClInclude Include="ClassDefinition.h" />
     <ClInclude Include="CodeGeneration.h" />
     <ClInclude Include="FileManager.h" />
+    <ClInclude Include="Module.h" />
     <ClInclude Include="PythonHelper.h" />
     <ClInclude Include="Logging.h" />
     <ClInclude Include="TypeConversions.h" />
@@ -190,6 +191,7 @@
     <ClCompile Include="ClassDefinition.cpp" />
     <ClCompile Include="CodeGeneration.cpp" />
     <ClCompile Include="FileManager.cpp" />
+    <ClCompile Include="Module.cpp" />
     <ClCompile Include="PythonHelper.cpp" />
     <ClCompile Include="Logging.cpp" />
     <ClCompile Include="PythonWalker.cpp" />
