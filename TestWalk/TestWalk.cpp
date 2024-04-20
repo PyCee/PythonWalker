@@ -33,41 +33,26 @@ int main()
     int gloVal = 3;
     PyObject* module = PythonWalker::Module::Load("TestModule");
 
+    PythonWalker::Logging::StartLoggingContext();
 
-    std::filesystem::path LogFilePath = currentPath / "LogFile.txt";
-
-    PythonWalker::Logging::StartLoggingContext(LogFilePath);
-
-
-    //PythonWalker::Module::SetGlobal<int>(module, "gloVal", gloVal);
     std::cout << PythonWalker::Module::GetGlobal<std::string>(module, "helloWorld") << std::endl;
 
     std::cout << PythonWalker::Module::GetGlobal<int>(module, "gloVar") << std::endl;
     PythonWalker::ExecuteFunction(module, "moduleFunctionMultplyGlobalByTwo");
     PythonWalker::ExecuteFunction(module, "moduleFunctionMultplyGlobalByTwo");
-    //Assert::AreEqual(gloVal * 2, PythonWalker::Module::GetGlobal<int>(module, "gloVal"));
     std::cout << PythonWalker::Module::GetGlobal<int>(module, "gloVar") << std::endl;
 
     PythonWalker::Logging::FlushLoggingContext();
 
-    std::string result = PythonWalker::ScriptManager::GetFileContents(LogFilePath);
+    std::string result = PythonWalker::ScriptManager::GetFileContents(PythonWalker::Logging::GetCurrentLogFile());
     std::cout << result << std::endl;
 
     PythonWalker::Logging::CloseLoggingContext();
-    std::filesystem::remove(LogFilePath);
-
-
 
     //TODO better handling python errors
     //  1. Logging - Done
     //  2. Replaying back with object and environment variables set for debugging in user environment
     //      Would have to generate a script that the user can use to step through an issue
-    // 
-    //TODO Maybe support standalone module functions
-    //  Not super important, but feels like I might as well
-    //  Should do to support user writing functions without a whole class interface
-
-    PythonWalker::CodeGeneration::DeletePythonModule(currentPath, "GeneratedFiles", true);
 
     std::cout << "Done walking the python." << std::endl;
 }

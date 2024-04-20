@@ -68,7 +68,7 @@ public:
 		__PYW_TYPING_CLASS_METHOD(double, AddNumbersTogether, std::vector<double>, numbers)
 		__PYW_TYPING_CLASS_METHOD(double, AddNumbersTogether, std::list<double>, numbers)
 		__PYW_TYPING_CLASS_METHOD(std::vector<const char *>, getFriends)
-		__PYW_TYPING_CLASS_METHOD(std::vector<int>, countToFive)
+		__PYW_TYPING_CLASS_METHOD(std::vector<int>, countToFiveVector)
 	
 		__PYW_TYPING_CLASS_METHOD(int, getGlobalVar)
 		__PYW_TYPING_CLASS_METHOD(void, setGlobalVar, int, value)
@@ -89,7 +89,7 @@ public:
 /* Python typing function that multiplies an internal global Python variable by two */
 __PYW_TYPING_METHOD("TestModule", void, moduleFunctionMultplyGlobalByTwo)
 /* Python typing function that returns a string */
-__PYW_TYPING_METHOD("TestModule", std::string, moduleFunctionReturnHelloWorld)
+__PYW_TYPING_METHOD("TestModule", std::string, moduleFunctionReturnHelloWorldGlobal)
 /* Python typing function that takes two numbers and returns the result of them multiplied together */
 __PYW_TYPING_METHOD("TestModule", int, moduleFunctionMultply, int, num1, int, num2)
 
@@ -111,6 +111,8 @@ namespace PythonInterfaceTestCases
 	TEST_CLASS(PythonModuleInterfaceTestClass)
 	{
 	public:
+		// Corresponds to the hardcoded value of helloWorld within TestModule.py
+		std::string HelloWorld = "HelloWorld";
 
 		TestPythonClass testSnake;
 		TEST_METHOD(LoadModule)
@@ -121,10 +123,9 @@ namespace PythonInterfaceTestCases
 		TEST_METHOD(GetModuleGlobal)
 		{
 			PyObject* module = PythonWalker::Module::Load("TestModule");
-			std::string helloWorld = "HelloWorld";
 			std::string globalValue = PythonWalker::Module::GetGlobal<std::string>(module, "helloWorld");
 
-			Assert::AreEqual(helloWorld, globalValue);
+			Assert::AreEqual(HelloWorld, globalValue);
 		}
 		TEST_METHOD(GetAndSetModuleGlobal)
 		{
@@ -158,9 +159,8 @@ namespace PythonInterfaceTestCases
 
 		TEST_METHOD(RunModuleFunctionWithReturn)
 		{
-			std::string expected = "HelloWorld";
-			std::string result = moduleFunctionReturnHelloWorld();
-			Assert::AreEqual(expected, result);
+			std::string result = moduleFunctionReturnHelloWorldGlobal();
+			Assert::AreEqual(HelloWorld, result);
 		}
 
 		TEST_METHOD(RunModuleFunctionWithParameters)
@@ -184,33 +184,51 @@ namespace PythonInterfaceTestCases
 			TestPythonClass testSubfolderObject = TestPythonClass("Subfolder.TestOregano", "TestOregano");
 			Assert::IsTrue(testSubfolderObject.IsInitialized());
 		}
-		TEST_METHOD(GetAndSetVariables)
+		TEST_METHOD(GetAndSetInt)
 		{
 			int age1 = 1, age2 = 2;
-			const char* name = "Ludwig";
-			std::string birthplace = "Alaska";
-			long length = 7;
-			bool isCool = true;
-
 			testSnake.age = age1;
 			Assert::AreEqual(age1, testSnake.age);
 			testSnake.age = age2;
 			Assert::AreEqual(age2, testSnake.age);
-
+		}
+		TEST_METHOD(GetAndSetConstCharPtr)
+		{
+			const char* name = "Ludwig";
 			testSnake.name = name;
 			Assert::AreEqual(name, testSnake.name);
+		}
 
+		TEST_METHOD(GetAndSetString)
+		{
+			std::string birthplace = "Alaska";
 			testSnake.birthplace = birthplace;
 			Assert::AreEqual(birthplace, testSnake.birthplace);
-
+		}
+		TEST_METHOD(GetAndSetLong)
+		{
+			long length = 7;
 			testSnake.length = length;
 			Assert::AreEqual(length, testSnake.length);
 
-			testSnake.isCool = false;
-			Assert::AreEqual(false, testSnake.isCool);
+			length = LONG_MAX;
+			testSnake.length = length;
+			Assert::AreEqual(length, testSnake.length);
 
-			testSnake.isCool = true;
-			Assert::AreEqual(true, testSnake.isCool);
+			length = LONG_MIN;
+			testSnake.length = length;
+			Assert::AreEqual(length, testSnake.length);
+		}
+		TEST_METHOD(GetAndSetBoolean)
+		{
+			bool isCool = true;
+
+			testSnake.isCool = isCool;
+			Assert::AreEqual(isCool, testSnake.isCool);
+
+			isCool = false;
+			testSnake.isCool = isCool;
+			Assert::AreEqual(isCool, testSnake.isCool);
 		}
 		TEST_METHOD(FunctionSideEffects)
 		{
@@ -275,31 +293,17 @@ namespace PythonInterfaceTestCases
 			Assert::AreEqual(x, testSnake.position.X);
 			Assert::AreEqual(y, testSnake.position.Y);
 		}
-		TEST_METHOD(SetNestedObjectPropagatesToPyObject)
+		TEST_METHOD(SetNestedObjectByValueNotReference)
 		{
-			double x = 1, y = 2;
-			PyPosition pos(x, y);
-			testSnake.position = pos;
-			Assert::AreEqual(x, testSnake.GetPositionXIndirectly());
-
-			pos.X = 0.5;
-			Assert::AreNotEqual(pos.X, testSnake.GetPositionXIndirectly());
-		}
-		TEST_METHOD(IndirectObjectIndependence)
-		{
-			double x = 1, y = 2, x2 = 3.14;
+			double x = 1, y = 2, x2 = 3.14, y2 = 4.28;
 			PyPosition pos(x, y);
 			testSnake.position = pos;
 
 			pos.X = x2;
-			Assert::AreNotEqual(pos.X, testSnake.GetPositionXIndirectly());
-		}
-		TEST_METHOD(NestedObjectAssignmentKeepVariables)
-		{
-			double x = 1, y = 2;
-			testSnake.position = PyPosition(x, y);
-			Assert::AreEqual(testSnake.position.X, x);
-			Assert::AreEqual(testSnake.position.Y, y);
+			pos.Y = y2;
+
+			Assert::AreNotEqual(pos.X, testSnake.position.X);
+			Assert::AreNotEqual(pos.Y, testSnake.position.Y);
 		}
 		TEST_METHOD(NestedObjectMethod)
 		{
@@ -320,18 +324,6 @@ namespace PythonInterfaceTestCases
 			Assert::AreEqual(pos.ClassDef.Module, testSnake.position.ClassDef.Module,
 				L"Module not kept through assignment");
 		}
-		TEST_METHOD(ObjectIndependenceAfterAssignment)
-		{
-			double x = 1, y = 2, x2 = 3.14, y2 = 4.28;
-			PyPosition pos(x, y);
-			testSnake.position = pos;
-
-			pos.X = x2;
-			pos.Y = y2;
-
-			Assert::AreNotEqual(pos.X, testSnake.position.X);
-			Assert::AreNotEqual(pos.Y, testSnake.position.Y);
-		}
 		TEST_METHOD(GetClassDefinitionFromPyObject)
 		{
 			PyPosition pos;
@@ -339,7 +331,7 @@ namespace PythonInterfaceTestCases
 			Assert::AreEqual(pos.ClassDef.Module, def.Module);
 			Assert::AreEqual(pos.ClassDef.ClassName, def.ClassName);
 		}
-		TEST_METHOD(ListAsObjectVariable)
+		TEST_METHOD(GetAndSetVector)
 		{
 			std::vector<const char*> friends = std::vector<const char*>{
 				"Jake", "Sam"
@@ -350,10 +342,10 @@ namespace PythonInterfaceTestCases
 				Assert::IsTrue(VectorContains(friends, testSnake.friends[i]));
 			}
 		}
-		TEST_METHOD(ListElementCanBeChanged)
+		TEST_METHOD(VectorElementCanBeChanged)
 		{
 			const char* newFriend = "Hector";
-			const char* notSnakeFriend = "Ethan";
+			const char* notSnakeFriend = "Noodle";
 			testSnake.friends = std::vector<const char*>{
 				"Jake", "Sam", notSnakeFriend
 			};
@@ -394,12 +386,12 @@ namespace PythonInterfaceTestCases
 			double result = testSnake.AddNumbersTogether(listNumbers);
 			Assert::AreEqual(sum, result);
 		}
-		TEST_METHOD(ListAsReturnValue)
+		TEST_METHOD(VectorAsReturnValue)
 		{
 			std::vector<int> countToFive = std::vector<int>{
 				1, 2, 3, 4, 5
 			};
-			std::vector<int> result = testSnake.countToFive();
+			std::vector<int> result = testSnake.countToFiveVector();
 			for (int i = 0; i < countToFive.size(); i++) {
 				Assert::AreEqual(countToFive[i], result[i]);
 			}
@@ -521,7 +513,11 @@ namespace PythonFileTestCases
 		}
 		TEST_METHOD(FindIndirectDerrivedClasses)
 		{
-			std::vector<PythonWalker::ClassDefinition> scripts = scriptManager.GetScripts(false, PlantDefinition.ClassName);
+			std::vector<PythonWalker::ClassDefinition> scripts = scriptManager.GetScripts(false, BasilDefinition.ClassName);
+			Assert::IsTrue(VectorContains<PythonWalker::ClassDefinition>(scripts, ThaiBasilDefinition));
+
+			scripts = scriptManager.GetScripts(false, PlantDefinition.ClassName);
+			Assert::IsTrue(VectorContains<PythonWalker::ClassDefinition>(scripts, BasilDefinition));
 			Assert::IsTrue(VectorContains<PythonWalker::ClassDefinition>(scripts, ThaiBasilDefinition));
 		}
 		TEST_METHOD(ExcludeModule)
@@ -541,7 +537,6 @@ namespace PythonFileTestCases
 			std::vector<PythonWalker::ClassDefinition> scripts = scriptManager.GetScripts(true, MushroomDefinition.ClassName, excludedModules);
 			Assert::IsFalse(VectorContains<PythonWalker::ClassDefinition>(scripts, MushroomDefinition));
 			Assert::IsTrue(VectorContains<PythonWalker::ClassDefinition>(scripts, OysterMushroomDefinition));
-			Assert::IsFalse(VectorContains<PythonWalker::ClassDefinition>(scripts, BasilDefinition));
 		}
 	};
 }

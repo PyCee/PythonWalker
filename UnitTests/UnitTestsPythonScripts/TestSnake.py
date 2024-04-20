@@ -40,7 +40,7 @@ class TestSnake (TestAnimal):
         return self.AddNumbersTogether(numbers)
     def getFriends(self):
         return self.friends
-    def countToFive(self):
+    def countToFiveVector(self):
         return (1, 2, 3, 4, 5)
     def noParamFunction(self):
         pass
