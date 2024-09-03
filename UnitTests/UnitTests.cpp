@@ -250,8 +250,8 @@ namespace PythonInterfaceTestCases
 		}
 		TEST_METHOD(ObjectIndependence)
 		{
-			TestPythonClass testSnake1 = TestPythonClass("TestSnake", "TestSnake");
-			TestPythonClass testSnake2 = TestPythonClass("TestSnake", "TestSnake");
+			TestPythonClass testSnake1 = TestPythonClass();
+			TestPythonClass testSnake2 = TestPythonClass();
 			int age1 = 1, age2 = 2;
 			testSnake1.age = age1;
 			testSnake2.age = age2;
@@ -273,8 +273,8 @@ namespace PythonInterfaceTestCases
 		}
 		TEST_METHOD(GlobalIsSharedBetweenClassInstances)
 		{
-			TestPythonClass testSnake1 = TestPythonClass("TestSnake", "TestSnake");
-			TestPythonClass testSnake2 = TestPythonClass("TestSnake", "TestSnake");
+			TestPythonClass testSnake1 = TestPythonClass();
+			TestPythonClass testSnake2 = TestPythonClass();
 			int gloVal1=1, gloVal2=2;
 
 			testSnake1.setGlobalVar(gloVal1);
@@ -745,7 +745,7 @@ namespace PythonLoggingTestCases
 		}
 		TEST_METHOD(PrintToLogFile)
 		{
-			// Make sure the log file starts not created created
+			// Make sure the log file starts not created
 			Assert::IsFalse(std::filesystem::exists(LogFilePath));
 
 			PythonWalker::Logging::StartLoggingContext(LogFilePath);
@@ -763,10 +763,10 @@ namespace PythonLoggingTestCases
 		TEST_METHOD(ExceptionToLogFile)
 		{
 			PythonWalker::Logging::StartLoggingContext(LogFilePath);
-			try {
-				testSnake.functionThatHitsTypeError();
-			}
-			catch (PythonWalker::PythonMethodError e) { }
+
+			auto func = [this] {testSnake.functionThatHitsTypeError(); };
+			Assert::ExpectException<PythonWalker::PythonMethodError>(func);
+
 			PythonWalker::Logging::FlushLoggingContext();
 
 			std::string result = PythonWalker::ScriptManager::GetFileContents(LogFilePath);
