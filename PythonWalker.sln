@@ -1,0 +1,49 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.9.34728.123
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PythonWalker", "PythonWalker\PythonWalker.csproj", "{3453877A-A995-4E04-BB14-7F5767933178}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestWalk", "TestWalk\TestWalk.csproj", "{955A53AA-2974-431D-A4AA-4631DFD2AC31}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PythonMappingGeneration", "PythonMappingGeneration\PythonMappingGeneration.csproj", "{29052A26-C292-46C7-BAC3-021D23D602D1}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PythonMappingGenerationTests", "PythonMappingGenerationTests\PythonMappingGenerationTests.csproj", "{7D096BFE-2BA2-49BD-ACB8-F6280759A2D1}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PythonWalkerTests", "PythonWalkerTests\PythonWalkerTests.csproj", "{086F7028-D38F-41BF-85F9-82612A6F0DDA}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{3453877A-A995-4E04-BB14-7F5767933178}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3453877A-A995-4E04-BB14-7F5767933178}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3453877A-A995-4E04-BB14-7F5767933178}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3453877A-A995-4E04-BB14-7F5767933178}.Release|Any CPU.Build.0 = Release|Any CPU
+		{955A53AA-2974-431D-A4AA-4631DFD2AC31}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{955A53AA-2974-431D-A4AA-4631DFD2AC31}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{955A53AA-2974-431D-A4AA-4631DFD2AC31}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{955A53AA-2974-431D-A4AA-4631DFD2AC31}.Release|Any CPU.Build.0 = Release|Any CPU
+		{29052A26-C292-46C7-BAC3-021D23D602D1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{29052A26-C292-46C7-BAC3-021D23D602D1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{29052A26-C292-46C7-BAC3-021D23D602D1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{29052A26-C292-46C7-BAC3-021D23D602D1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7D096BFE-2BA2-49BD-ACB8-F6280759A2D1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7D096BFE-2BA2-49BD-ACB8-F6280759A2D1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7D096BFE-2BA2-49BD-ACB8-F6280759A2D1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7D096BFE-2BA2-49BD-ACB8-F6280759A2D1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{086F7028-D38F-41BF-85F9-82612A6F0DDA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{086F7028-D38F-41BF-85F9-82612A6F0DDA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{086F7028-D38F-41BF-85F9-82612A6F0DDA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{086F7028-D38F-41BF-85F9-82612A6F0DDA}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {3A87FC11-4836-430C-B4A6-1038B46FC90C}
+	EndGlobalSection
+EndGlobal
