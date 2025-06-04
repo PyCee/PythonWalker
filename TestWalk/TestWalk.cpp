@@ -12,6 +12,59 @@ public:
         __PYW_TYPING_CLASS_METHOD(void, issueFunction)
 };
 
+
+class PyPosition : public PythonWalker::ObjectInstance {
+public:
+    using PythonWalker::ObjectInstance::ObjectInstance;
+    PyPosition() : PythonWalker::ObjectInstance("TestSnake", "Position") {};
+    PyPosition(double x, double y) : PyPosition() {
+        X = x;
+        Y = y;
+    };
+    __PYW_TYPING_VAR(double, X)
+        __PYW_TYPING_VAR(double, Y)
+        __PYW_TYPING_CLASS_METHOD(double, pythag)
+};
+
+class TestPythonClass : public PythonWalker::ObjectInstance {
+public:
+    using PythonWalker::ObjectInstance::ObjectInstance;
+    TestPythonClass() : PythonWalker::ObjectInstance("TestSnake", "TestSnake") {};
+
+    __PYW_TYPING_VAR(const char*, name)
+        __PYW_TYPING_VAR(std::string, birthplace)
+        __PYW_TYPING_VAR(long, length)
+        __PYW_TYPING_VAR(int, age)
+        __PYW_TYPING_VAR(double, terrariumWidth)
+        __PYW_TYPING_VAR(double, terrariumDepth)
+        __PYW_TYPING_VAR(float, terrariumHeight)
+        __PYW_TYPING_VAR(bool, isCool)
+        __PYW_TYPING_VAR(PyPosition, position)
+        __PYW_TYPING_VAR(std::vector<const char*>, friends)
+
+        __PYW_TYPING_VAR(int, fakeInt)
+
+        __PYW_TYPING_CLASS_METHOD(void, increaseAgeByOne)
+        __PYW_TYPING_CLASS_METHOD(void, functionThatHitsTypeError)
+        __PYW_TYPING_CLASS_METHOD(double, calculateTerrariumArea)
+        __PYW_TYPING_CLASS_METHOD(void, changeName, const char*, newName)
+        __PYW_TYPING_CLASS_METHOD(double, AddThreeParametersTogether, int, a, float, b, double, c)
+
+        // Inherently checks that we can overload function parameters like this,
+        //   which end up calling into the same python function.
+        __PYW_TYPING_CLASS_METHOD(double, AddNumbersTogether, std::vector<double>, numbers)
+        __PYW_TYPING_CLASS_METHOD(double, AddNumbersTogether, std::list<double>, numbers)
+        __PYW_TYPING_CLASS_METHOD(std::vector<const char*>, getFriends)
+        __PYW_TYPING_CLASS_METHOD(std::vector<int>, countToFiveVector)
+
+        __PYW_TYPING_CLASS_METHOD(int, getGlobalVar)
+        __PYW_TYPING_CLASS_METHOD(void, setGlobalVar, int, value)
+        __PYW_TYPING_CLASS_METHOD(void, fakeFunction)
+        __PYW_TYPING_CLASS_METHOD(void, noParamFunction, int, fakeParam)
+        __PYW_TYPING_CLASS_METHOD(void, printMessage, std::string, msg)
+        __PYW_TYPING_CLASS_METHOD(double, GetPositionXIndirectly)
+};
+
 //https://w3.pppl.gov/~hammett/comp/python/LLNLDistribution11/CXX/Doc/cxx.htm
 
 
@@ -29,7 +82,7 @@ int main()
         });
     PythonWalker::Initialize();
     PythonWalker::ScriptManager scriptManager(paths);
-
+    /*
     int gloVal = 3;
     PyObject* module = PythonWalker::Module::Load("TestModule");
 
@@ -48,7 +101,24 @@ int main()
     std::cout << result << std::endl;
 
     PythonWalker::Logging::CloseLoggingContext();
+    */
+    std::filesystem::path LogDirectory = currentPath / "Logs";
+    std::filesystem::path LogFilePath = LogDirectory / "LogFile.txt";
+    std::string LoggingMessage = "My unit testing message";
+    TestPythonClass testSnake;
+    bool test = (std::filesystem::exists(LogFilePath));
 
+    PythonWalker::Logging::StartLoggingContext(LogFilePath);
+
+    // Make sure the log file was created
+    bool test2 = (std::filesystem::exists(LogFilePath));
+
+    testSnake.printMessage(LoggingMessage);
+    PythonWalker::Logging::FlushLoggingContext();
+
+    std::string result = PythonWalker::ScriptManager::GetFileContents(LogFilePath);
+    std::string expected = LoggingMessage + "\n";
+    
     //TODO better handling python errors
     //  1. Logging - Done
     //  2. Replaying back with object and environment variables set for debugging in user environment

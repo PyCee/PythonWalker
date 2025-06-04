@@ -6,6 +6,8 @@
 #include "Exceptions.h"
 #include "TypeConversions.h"
 #include "ClassDefinition.h"
+#include <map>
+#include <any>
 
 namespace PythonWalker {
 	class ObjectInstance
@@ -22,11 +24,6 @@ namespace PythonWalker {
 		PyObject* PyObjectInstance;
 		ClassDefinition ClassDef;
 
-
-	protected:
-
-	private:
-		PyObject* ExecuteFunctionInternal(const char* functionName, PyObject* keywords = nullptr);
 	public:
 
 		template <typename T>
