@@ -44,7 +44,7 @@ namespace PythonWalker {
 	*  Macro takes the return type and function to convert a PyObject* into that type.
 	*/
 	#define __GEN_GET_PRIMITIVE_VALUE_FROM_PYOBJECT(TYPE, CONVERSION_FUN) \
-		template <>	static TYPE GetValueFromPyObject<TYPE>(PyObject* pyObject) { return (TYPE)CONVERSION_FUN(pyObject); }
+		template <> TYPE GetValueFromPyObject<TYPE>(PyObject* pyObject) { return (TYPE)CONVERSION_FUN(pyObject); }
 
 	__GEN_GET_PRIMITIVE_VALUE_FROM_PYOBJECT(int, PyLong_AsLong)
 	__GEN_GET_PRIMITIVE_VALUE_FROM_PYOBJECT(long, PyLong_AsLong)
@@ -54,8 +54,8 @@ namespace PythonWalker {
 	__GEN_GET_PRIMITIVE_VALUE_FROM_PYOBJECT(std::string, PyUnicode_AsUTF8)
 	__GEN_GET_PRIMITIVE_VALUE_FROM_PYOBJECT(bool, PyObject_IsTrue)
 
-	template <>	static void GetValueFromPyObject<void>(PyObject* pyObject) { return; }
-	template <>	static PyObject* GetValueFromPyObject<PyObject*>(PyObject* pyObject) { return pyObject; }
+	template <> void GetValueFromPyObject<void>(PyObject* pyObject) { return; }
+	template <> PyObject* GetValueFromPyObject<PyObject*>(PyObject* pyObject) { return pyObject; }
 
 
 

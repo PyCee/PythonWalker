@@ -6,8 +6,6 @@
 #include "Exceptions.h"
 #include "TypeConversions.h"
 #include "ClassDefinition.h"
-#include <map>
-#include <any>
 
 namespace PythonWalker {
 	class ObjectInstance
