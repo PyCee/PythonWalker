@@ -60,7 +60,6 @@ std::vector<PythonWalker::ClassDefinition> PythonWalker::Module::GetClassDefinit
     Py_ssize_t pos = 0;
 
     while (PyDict_Next(dict, &pos, &pKey, &value)) {
-        const char* className = PyUnicode_AsUTF8(pKey);
         if (PyType_Check(value)) {
 
             // Make sure this class is actually from the working module, not just imported from another
