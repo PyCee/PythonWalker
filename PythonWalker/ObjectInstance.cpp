@@ -24,7 +24,11 @@ PythonWalker::ObjectInstance::~ObjectInstance() {}
 
 void PythonWalker::ObjectInstance::RegenerateFromScript()
 {
+	RegenerateFromScript(ClassDef);
+}
+void PythonWalker::ObjectInstance::RegenerateFromScript(ClassDefinition classDef)
+{
 	PyObject* regenPyObject = PyObjectInstance;
-	PyObjectInstance = ClassDef.GetNewObject();
+	PyObjectInstance = classDef.GetNewObject();
 	PythonWalker::CopyPyObjectValues(regenPyObject, PyObjectInstance);
 }

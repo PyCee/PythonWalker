@@ -50,6 +50,8 @@ class TestSnake (TestAnimal):
         print(msg)
     def GetPositionXIndirectly(self):
         return self.position.X
+    def getType(self):
+        return "Snake"
     
 
 

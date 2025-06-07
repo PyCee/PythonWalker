@@ -9,5 +9,7 @@ class TestAnimal(object):
         self.age += 1
     def changeName(self, newName):
         self.name = newName
+    def getType(self):
+        return "Animal"
 
 

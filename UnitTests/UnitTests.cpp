@@ -76,6 +76,7 @@ public:
 		__PYW_TYPING_CLASS_METHOD(void, noParamFunction, int, fakeParam)
 		__PYW_TYPING_CLASS_METHOD(void, printMessage, std::string, msg)
 		__PYW_TYPING_CLASS_METHOD(double, GetPositionXIndirectly)
+		__PYW_TYPING_CLASS_METHOD(const char*, getType)
 };
 class TestRobotClass : public PythonWalker::ObjectInstance {
 public:
@@ -395,6 +396,20 @@ namespace PythonInterfaceTestCases
 			for (int i = 0; i < countToFive.size(); i++) {
 				Assert::AreEqual(countToFive[i], result[i]);
 			}
+		}
+		TEST_METHOD(KeepVariableThroughChangingSource)
+		{
+			TestPythonClass swappingSnake = TestPythonClass();
+			int expectedAge = 19;
+			swappingSnake.age = expectedAge;
+			Assert::AreEqual(expectedAge, swappingSnake.age);
+			Assert::AreEqual("Snake", swappingSnake.getType());
+
+			swappingSnake.RegenerateFromScript(PythonWalker::ClassDefinition("TestAnimal", "TestAnimal"));
+
+			// Make sure the value of age sticks through the reassignment, but the function was updated
+			Assert::AreEqual(expectedAge, swappingSnake.age);
+			Assert::AreEqual("Animal", swappingSnake.getType());
 		}
 	};
 	TEST_CLASS(PythonInterfaceExceptionTestClass)
