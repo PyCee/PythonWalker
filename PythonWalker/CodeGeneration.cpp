@@ -11,6 +11,11 @@ std::filesystem::path PythonWalker::CodeGeneration::GetGeneratedFilePath(std::fi
 	}
 	return path;
 }
+std::filesystem::path PythonWalker::CodeGeneration::GetGeneratedFilePath(std::filesystem::path path, ClassDefinition classDef)
+{
+	std::vector<std::string> modules = PythonWalker::Module::ParsePythonModuleString(classDef.Module);
+	return GetGeneratedFilePath(path, modules);
+}
 
 std::filesystem::path PythonWalker::CodeGeneration::GeneratePythonClass(std::filesystem::path path, std::vector<std::string> modules, std::string code, bool append)
 {
@@ -21,7 +26,10 @@ std::filesystem::path PythonWalker::CodeGeneration::GeneratePythonClass(std::fil
 	std::ofstream newFile(path.string(), append ? std::ios::app : std::ios::out);
 	newFile << code;
 	newFile.close();
-	PyImport_ReloadModule(PythonWalker::Module::Load(modules));
+	std::optional<PyObject*> module = PythonWalker::Module::Load(modules);
+	if (module) {
+		PyImport_ReloadModule(module.value());
+	}
 	return path;
 }
 

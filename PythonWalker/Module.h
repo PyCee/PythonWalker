@@ -4,10 +4,9 @@
 #include <vector>
 #include "PythonHelper.h"
 #include "ClassDefinition.h"
-#include "Exceptions.h"
 
 namespace PythonWalker {
-	PyObject* GetPyObjectDataContainer(std::string pModuleName);
+	std::optional<PyObject*> GetPyObjectDataContainer(std::string);
 }
 
 namespace PythonWalker::Module {
@@ -16,47 +15,58 @@ namespace PythonWalker::Module {
 	/* Loads python module into memory
 	* @param moduleName - Python file path
 	*/
-	PyObject* Load(std::string moduleName);
-	PyObject* Load(std::vector<std::string> moduleNames);
+	std::optional<PyObject*> Load(std::string moduleName);
+	std::optional<PyObject*> Load(std::vector<std::string> moduleNames);
 
-	PyObject* LoadDict(PyObject* pModule);
+	std::optional<PyObject*> LoadDict(PyObject* pModule);
 	template <typename T>
-	T GetGlobal(PyObject* pModule, const char* variableName)
+	std::optional<T> GetGlobal(PyObject* pModule, const char* variableName)
 	{
-		PyObject* dict = PythonWalker::Module::LoadDict(pModule);
+		std::optional<PyObject*> dict = PythonWalker::Module::LoadDict(pModule);
 
-		PyObject* pythonGlobalValue = PyDict_GetItemString(dict, variableName);
+		if (!dict) {
+			return std::nullopt;
+		}
+
+		PyObject* pythonGlobalValue = PyDict_GetItemString(dict.value(), variableName);
 		if (pythonGlobalValue == nullptr) {
 			PyErr_Print();
-			throw PythonWalker::PythonObjectDNE(variableName);
+			return std::nullopt;
 		}
 		return GetValueFromPyObject<T>(pythonGlobalValue);
 	}
 	template <typename T>
-	T GetGlobal(std::string pModuleName, const char* variableName)
+	std::optional<T> GetGlobal(std::string pModuleName, const char* variableName)
 	{
-		PyObject* pModule = PythonWalker::GetPyObjectDataContainer(pModuleName);
-		return GetGlobal<T>(pModule, variableName);
+		std::optional<PyObject*> pModule = PythonWalker::GetPyObjectDataContainer(pModuleName);
+		if (!pModule) {
+			return std::nullopt;
+		}
+		return GetGlobal<T>(pModule.value(), variableName);
 	}
 	template <typename T>
 	void SetGlobal(PyObject* pModule, const char* variableName, T value)
 	{
-		PyObject* dict = PythonWalker::Module::LoadDict(pModule);
-		PyDict_SetItemString(dict, variableName, GetPyObjectFromValue(value));
+		std::optional<PyObject*> dict = PythonWalker::Module::LoadDict(pModule);
+		if (dict) {
+			PyDict_SetItemString(dict.value(), variableName, GetPyObjectFromValue(value));
+		}
 	}
 
 	template <typename T>
 	void SetGlobal(std::string pModuleName, const char* variableName, T value)
 	{
-		PyObject* pModule = PythonWalker::GetPyObjectDataContainer(pModuleName);
-		return SetGlobal<T>(pModule, variableName, value);
+		std::optional<PyObject*> pModule = PythonWalker::GetPyObjectDataContainer(pModuleName);
+		if (pModule) {
+			SetGlobal<T>(pModule.value(), variableName, value);
+		}
 	}
 	/* Retrieves class definitions from the given module
 	* @param moduleName - Name of the module to check
 	*/
 	std::vector<ClassDefinition> GetClassDefinitions(const char* moduleName);
-	PyObject* GetPythonClass(const char* moduleName, const char* className);
-	PyObject* GetPythonClass(PyObject* pModule, const char* className);
+	std::optional<PyObject*> GetPythonClass(const char* moduleName, const char* className);
+	std::optional<PyObject*> GetPythonClass(PyObject* pModule, const char* className);
 	bool MatchesModule(PyObject* pObject, const char* moduleName);
 
 }

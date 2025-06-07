@@ -1,5 +1,4 @@
 #include "Module.h"
-#include "Exceptions.h"
 
 std::vector<std::string> PythonWalker::Module::ParsePythonModuleString(std::string module)
 {
@@ -16,17 +15,17 @@ std::vector<std::string> PythonWalker::Module::ParsePythonModuleString(std::stri
     return results;
 }
 
-PyObject* PythonWalker::Module::Load(std::string moduleName)
+std::optional<PyObject*> PythonWalker::Module::Load(std::string moduleName)
 {
     PyObject* pModule = PyImport_ImportModule(moduleName.c_str());
     if (pModule == nullptr) {
         PyErr_Print();
-        throw PythonModuleDNE(moduleName);
+        return std::nullopt;
     }
 
     return pModule;
 }
-PyObject* PythonWalker::Module::Load(std::vector<std::string> moduleNames)
+std::optional<PyObject*> PythonWalker::Module::Load(std::vector<std::string> moduleNames)
 {
     std::string resultingName;
     for (std::string moduleName : moduleNames) {
@@ -38,12 +37,12 @@ PyObject* PythonWalker::Module::Load(std::vector<std::string> moduleNames)
 
     return Load(resultingName);
 }
-PyObject* PythonWalker::Module::LoadDict(PyObject* pModule)
+std::optional<PyObject*> PythonWalker::Module::LoadDict(PyObject* pModule)
 {
     PyObject* dict = PyModule_GetDict(pModule);
     if (dict == nullptr) {
         PyErr_Print();
-        throw PythonModuleDictionaryFailed();
+        return std::nullopt;
     }
     return dict;
 }
@@ -54,7 +53,7 @@ std::vector<PythonWalker::ClassDefinition> PythonWalker::Module::GetClassDefinit
 {
     std::vector<ClassDefinition> results;
     // At this point we have a python module, find classes within it
-    PyObject* module = Load(moduleName);
+    PyObject* module = Load(moduleName).value();
     PyObject* dict = PyModule_GetDict(module);
     PyObject* pKey, * value = NULL;
     Py_ssize_t pos = 0;
@@ -75,24 +74,27 @@ std::vector<PythonWalker::ClassDefinition> PythonWalker::Module::GetClassDefinit
     return results;
 }
 
-PyObject* PythonWalker::Module::GetPythonClass(const char* moduleName, const char* className)
+std::optional<PyObject*> PythonWalker::Module::GetPythonClass(const char* moduleName, const char* className)
 {
-    PyObject* pModule = Load(moduleName);
-    return GetPythonClass(pModule, className);
+    std::optional<PyObject*> pModule = Load(moduleName);
+    if (!pModule) {
+        return std::nullopt;
+    }
+    return GetPythonClass(pModule.value(), className);
 }
-PyObject* PythonWalker::Module::GetPythonClass(PyObject* pModule, const char* className)
+std::optional<PyObject*> PythonWalker::Module::GetPythonClass(PyObject* pModule, const char* className)
 {
     if (pModule == nullptr) {
-        throw PythonModuleNotInitialized();
+        return std::nullopt;
     }
 
-    PyObject* dict = LoadDict(pModule);
+    PyObject* dict = LoadDict(pModule).value();
 
     // Builds the name of a callable class
     PyObject* pythonClass = PyDict_GetItemString(dict, className);
     if (pythonClass == nullptr) {
         PyErr_Print();
-        throw PythonObjectDNE(className);
+        return std::nullopt;
     }
     //Py_DECREF(dict);
     return pythonClass;

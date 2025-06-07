@@ -17,7 +17,7 @@ bool VectorContains(std::vector<T> vec, T val)
 {
 	return std::find(vec.begin(), vec.end(), val) != vec.end();
 }
-bool VectorContains(std::vector<const char *> vec, const char* val)
+static bool VectorContains(std::vector<const char *> vec, const char* val)
 {
 	for(const char* vectorValue : vec) {
 		if (strcmp(vectorValue, val) == 0) {
@@ -36,7 +36,7 @@ public:
 	};
 	__PYW_TYPING_VAR(double, X)
 	__PYW_TYPING_VAR(double, Y)
-		__PYW_TYPING_CLASS_METHOD(double, pythag)
+	__PYW_TYPING_CLASS_METHOD(double, pythag)
 };
 
 class TestPythonClass : public PythonWalker::ObjectInstance {
@@ -72,7 +72,6 @@ public:
 	
 		__PYW_TYPING_CLASS_METHOD(int, getGlobalVar)
 		__PYW_TYPING_CLASS_METHOD(void, setGlobalVar, int, value)
-		__PYW_TYPING_CLASS_METHOD(void, fakeFunction)
 		__PYW_TYPING_CLASS_METHOD(void, noParamFunction, int, fakeParam)
 		__PYW_TYPING_CLASS_METHOD(void, printMessage, std::string, msg)
 		__PYW_TYPING_CLASS_METHOD(double, GetPositionXIndirectly)
@@ -118,56 +117,60 @@ namespace PythonInterfaceTestCases
 		TestPythonClass testSnake;
 		TEST_METHOD(LoadModule)
 		{
-			PyObject* module = PythonWalker::Module::Load("TestModule");
+			std::optional<PyObject*> moduleOpt = PythonWalker::Module::Load("TestModule");
+			PyObject* module = moduleOpt.value();
 			Assert::IsNotNull(module);
 		}
 		TEST_METHOD(GetModuleGlobal)
 		{
-			PyObject* module = PythonWalker::Module::Load("TestModule");
-			std::string globalValue = PythonWalker::Module::GetGlobal<std::string>(module, "helloWorld");
+			std::optional<PyObject*> moduleOpt = PythonWalker::Module::Load("TestModule");
+			PyObject* module = moduleOpt.value();
+			std::string globalValue = PythonWalker::Module::GetGlobal<std::string>(module, "helloWorld").value();
 
 			Assert::AreEqual(HelloWorld, globalValue);
 		}
 		TEST_METHOD(GetAndSetModuleGlobal)
 		{
-			PyObject* module = PythonWalker::Module::Load("TestModule");
+			std::optional<PyObject*> moduleOpt = PythonWalker::Module::Load("TestModule");
+			PyObject* module = moduleOpt.value();
 			int gloVar1 = 1, gloVar2 = 2, gloVar3 = 3;
 
 			PythonWalker::Module::SetGlobal<int>(module, "gloVar", gloVar1);
-			Assert::AreEqual(gloVar1, PythonWalker::Module::GetGlobal<int>(module, "gloVar"));
+			Assert::AreEqual(gloVar1, PythonWalker::Module::GetGlobal<int>(module, "gloVar").value());
 
 			PythonWalker::Module::SetGlobal<int>(module, "gloVar", gloVar2);
-			Assert::AreEqual(gloVar2, PythonWalker::Module::GetGlobal<int>(module, "gloVar"));
+			Assert::AreEqual(gloVar2, PythonWalker::Module::GetGlobal<int>(module, "gloVar").value());
 
 			PythonWalker::Module::SetGlobal<int>("TestModule", "gloVar", gloVar3);
-			Assert::AreEqual(gloVar3, PythonWalker::Module::GetGlobal<int>("TestModule", "gloVar"));
+			Assert::AreEqual(gloVar3, PythonWalker::Module::GetGlobal<int>("TestModule", "gloVar").value());
 		}
 		
 		TEST_METHOD(ModifyModuleGlobalViaFunction)
 		{
 			int gloVar = 2;
 			int expected = gloVar * 2;
-			PyObject* module = PythonWalker::Module::Load("TestModule");
+			std::optional<PyObject*> moduleOpt = PythonWalker::Module::Load("TestModule");
+			PyObject* module = moduleOpt.value();
 
 			PythonWalker::Module::SetGlobal<int>(module, "gloVar", gloVar);
-			Assert::AreEqual(gloVar, PythonWalker::Module::GetGlobal<int>(module, "gloVar"));
+			Assert::AreEqual(gloVar, PythonWalker::Module::GetGlobal<int>(module, "gloVar").value());
 
 			moduleFunctionMultplyGlobalByTwo();
 
-			int result = PythonWalker::Module::GetGlobal<int>(module, "gloVar");
+			int result = PythonWalker::Module::GetGlobal<int>(module, "gloVar").value();
 			Assert::AreEqual(expected, result);
 		}
 
 		TEST_METHOD(RunModuleFunctionWithReturn)
 		{
-			std::string result = moduleFunctionReturnHelloWorldGlobal();
+			std::string result = moduleFunctionReturnHelloWorldGlobal().value();
 			Assert::AreEqual(HelloWorld, result);
 		}
 
 		TEST_METHOD(RunModuleFunctionWithParameters)
 		{
 			int num1 = 2, num2 = 3, expected = num1 * num2;
-			int result = moduleFunctionMultply(num1, num2);
+			int result = moduleFunctionMultply(num1, num2).value();
 			Assert::AreEqual(expected, result);
 		}
 	};
@@ -246,7 +249,7 @@ namespace PythonInterfaceTestCases
 			testSnake.terrariumWidth = width;
 			testSnake.terrariumDepth = depth;
 			testSnake.terrariumHeight = (float)height;
-			double pythonCalculatedArea = testSnake.calculateTerrariumArea();
+			double pythonCalculatedArea = testSnake.calculateTerrariumArea().value();
 			Assert::AreEqual(area, pythonCalculatedArea);
 		}
 		TEST_METHOD(ObjectIndependence)
@@ -269,7 +272,7 @@ namespace PythonInterfaceTestCases
 			int a = 1;
 			float b = 2.5;
 			double c = 3.14159;
-			double result = testSnake.AddThreeParametersTogether(a, b, c);
+			double result = testSnake.AddThreeParametersTogether(a, b, c).value();
 			Assert::AreEqual(a + b + c, result);
 		}
 		TEST_METHOD(GlobalIsSharedBetweenClassInstances)
@@ -279,12 +282,12 @@ namespace PythonInterfaceTestCases
 			int gloVal1=1, gloVal2=2;
 
 			testSnake1.setGlobalVar(gloVal1);
-			Assert::AreEqual(gloVal1, testSnake1.getGlobalVar());
-			Assert::AreEqual(gloVal1, testSnake2.getGlobalVar());
+			Assert::AreEqual(gloVal1, testSnake1.getGlobalVar().value());
+			Assert::AreEqual(gloVal1, testSnake2.getGlobalVar().value());
 
 			testSnake2.setGlobalVar(gloVal2);
-			Assert::AreEqual(gloVal2, testSnake1.getGlobalVar());
-			Assert::AreEqual(gloVal2, testSnake2.getGlobalVar());
+			Assert::AreEqual(gloVal2, testSnake1.getGlobalVar().value());
+			Assert::AreEqual(gloVal2, testSnake2.getGlobalVar().value());
 		}
 		TEST_METHOD(GetAndSetNestedObject)
 		{
@@ -311,7 +314,7 @@ namespace PythonInterfaceTestCases
 			double x = 1, y = 2;
 			testSnake.position = PyPosition(x, y);
 			double pythag = sqrt(x*x + y*y);
-			double result = testSnake.position.pythag();
+			double result = testSnake.position.pythag().value();
 			Assert::AreEqual(pythag, result);
 		}
 		TEST_METHOD(KeepClassDefThroughAssignment)
@@ -374,7 +377,7 @@ namespace PythonInterfaceTestCases
 			};
 			double sum = 0;
 			for (double i : vectorNumbers) sum += i;
-			double result = testSnake.AddNumbersTogether(vectorNumbers);
+			double result = testSnake.AddNumbersTogether(vectorNumbers).value();
 			Assert::AreEqual(sum, result);
 		}
 		TEST_METHOD(ListAsParameter)
@@ -384,7 +387,7 @@ namespace PythonInterfaceTestCases
 			};
 			double sum = 0;
 			for (double i : listNumbers) sum += i;
-			double result = testSnake.AddNumbersTogether(listNumbers);
+			double result = testSnake.AddNumbersTogether(listNumbers).value();
 			Assert::AreEqual(sum, result);
 		}
 		TEST_METHOD(VectorAsReturnValue)
@@ -392,7 +395,7 @@ namespace PythonInterfaceTestCases
 			std::vector<int> countToFive = std::vector<int>{
 				1, 2, 3, 4, 5
 			};
-			std::vector<int> result = testSnake.countToFiveVector();
+			std::vector<int> result = testSnake.countToFiveVector().value();
 			for (int i = 0; i < countToFive.size(); i++) {
 				Assert::AreEqual(countToFive[i], result[i]);
 			}
@@ -403,13 +406,13 @@ namespace PythonInterfaceTestCases
 			int expectedAge = 19;
 			swappingSnake.age = expectedAge;
 			Assert::AreEqual(expectedAge, swappingSnake.age);
-			Assert::AreEqual("Snake", swappingSnake.getType());
+			Assert::AreEqual("Snake", swappingSnake.getType().value());
 
 			swappingSnake.RegenerateFromScript(PythonWalker::ClassDefinition("TestAnimal", "TestAnimal"));
 
 			// Make sure the value of age sticks through the reassignment, but the function was updated
 			Assert::AreEqual(expectedAge, swappingSnake.age);
-			Assert::AreEqual("Animal", swappingSnake.getType());
+			Assert::AreEqual("Animal", swappingSnake.getType().value());
 		}
 		TEST_METHOD(ConstructClassDefinitionFromOneString)
 		{
@@ -419,46 +422,6 @@ namespace PythonInterfaceTestCases
 			PythonWalker::ClassDefinition def(singleClassPath.c_str());
 			Assert::AreEqual(module, def.Module);
 			Assert::AreEqual(className, def.ClassName);
-		}
-	};
-	TEST_CLASS(PythonInterfaceExceptionTestClass)
-	{
-	public:
-		TestPythonClass testSnake;
-		TEST_METHOD(FakeVariableException)
-		{
-			auto func = [this] {testSnake.fakeInt = 1; };
-			Assert::ExpectException<PythonWalker::PythonAttributeDNE>(func);
-		}
-		TEST_METHOD(FakeFunctionException)
-		{
-			auto func = [this] {testSnake.fakeFunction(); };
-			Assert::ExpectException<PythonWalker::PythonMethodDNE>(func);
-		}
-		TEST_METHOD(FakeFunctionParametersException)
-		{
-			auto func = [this] {testSnake.noParamFunction(4); };
-			Assert::ExpectException<PythonWalker::PythonMethodError>(func);
-		}
-		TEST_METHOD(FunctionIssue)
-		{
-			auto func = [this] {testSnake.functionThatHitsTypeError(); };
-			Assert::ExpectException<PythonWalker::PythonMethodError>(func);
-		}
-		TEST_METHOD(ModuleDNE)
-		{
-			auto func = [] {TestPythonClass fakeModuleSnake = TestPythonClass("FakeModule", "TestSnake"); };
-			Assert::ExpectException<PythonWalker::PythonModuleDNE>(func);
-		}
-		TEST_METHOD(ModuleNotInitialized)
-		{
-			auto func = [] {PythonWalker::CreateObject(nullptr, "TestSnake"); };
-			Assert::ExpectException<PythonWalker::PythonModuleNotInitialized>(func);
-		}
-		TEST_METHOD(ObjectDNE)
-		{
-			auto func = [] {TestPythonClass throwAway = TestPythonClass("TestSnake", "FakeName"); };
-			Assert::ExpectException<PythonWalker::PythonObjectDNE>(func);
 		}
 	};
 }
@@ -665,19 +628,18 @@ namespace CodeGenerationTestCases
 		TEST_METHOD(RegenerateClassWithChange)
 		{
 			PythonWalker::CodeGeneration::GeneratePythonClass(currentPath, RobotDefinition, RobotCodeWithZeroErrorString);
-			TestRobotClass robot = RobotDefinition.GetNewObject();
+			TestRobotClass robot = RobotDefinition.GetNewObject().value();
 			float expected = 0.0, result;
 
 			// Run the function and make sure it errors
-			auto func = [&] {robot.divide(1.0, 0.0); };
-			Assert::ExpectException<PythonWalker::PythonMethodError>(func);
+			Assert::IsFalse(robot.divide(1.0, 0.0).has_value());
 			
 			PythonWalker::CodeGeneration::GeneratePythonClass(currentPath, RobotDefinition, RobotCodeWithZeroErrorFixedString);
 
 			robot.RegenerateFromScript();
 
 			// Run the function without errors after regenerating it
-			result = robot.divide(1.0, 0.0);
+			result = robot.divide(1.0, 0.0).value();
 			Assert::AreEqual(expected, result);
 		}
 		TEST_METHOD(DetectFileChange)
@@ -726,7 +688,7 @@ namespace CodeGenerationTestCases
 		TEST_METHOD(KeepVariableValueThroughRegeneration)
 		{
 			PythonWalker::CodeGeneration::GeneratePythonClass(currentPath, RobotDefinition, RobotCodeWithZeroErrorString);
-			TestRobotClass robot = RobotDefinition.GetNewObject();
+			TestRobotClass robot = RobotDefinition.GetNewObject().value();
 			int expected = 10;
 			robot.age = expected;
 			Assert::AreEqual(expected, robot.age);
@@ -739,7 +701,7 @@ namespace CodeGenerationTestCases
 		TEST_METHOD(KeepVariableValueThroughSourceUpdate)
 		{
 			PythonWalker::CodeGeneration::GeneratePythonClass(currentPath, RobotDefinition, RobotCodeWithZeroErrorString);
-			TestRobotClass robot = RobotDefinition.GetNewObject();
+			TestRobotClass robot = RobotDefinition.GetNewObject().value();
 			int expected = 10;
 			robot.age = expected;
 			Assert::AreEqual(expected, robot.age);
@@ -789,8 +751,7 @@ namespace PythonLoggingTestCases
 		{
 			PythonWalker::Logging::StartLoggingContext(LogFilePath);
 
-			auto func = [this] {testSnake.functionThatHitsTypeError(); };
-			Assert::ExpectException<PythonWalker::PythonMethodError>(func);
+			testSnake.functionThatHitsTypeError();
 
 			PythonWalker::Logging::FlushLoggingContext();
 
@@ -847,13 +808,12 @@ namespace PythonLoggingTestCases
 			// Confirm the temp file is deleted after closing the logging context
 			Assert::IsFalse(std::filesystem::exists(tempLogPath));
 		}
-		TEST_METHOD(StartLoggingContextWhileOneIsOpen)
+		TEST_METHOD(StartLoggingContextWhileOneIsOpenDoesntCrash)
 		{
 			PythonWalker::Logging::StartLoggingContext(LogFilePath);
 
 			// Start a new logging context while the old one is still open
-			auto func = [] {PythonWalker::Logging::StartLoggingContext(); };
-			Assert::ExpectException<PythonWalker::PythonLoggingContextAlreadyOpen>(func);
+			PythonWalker::Logging::StartLoggingContext();
 		}
 	};
 	TEST_CLASS(PythonReplayTestClass)
@@ -872,14 +832,11 @@ namespace PythonLoggingTestCases
 			std::string module = "GeneratedFiles.Robot";
 			PythonWalker::CodeGeneration::GeneratePythonClass(currentPath, module, RobotCodeWithZeroErrorString);
 			TestRobotClass robot = TestRobotClass("GeneratedFiles.Robot", "Robot");
-			float result;
 
 			// Test with error
 			PythonWalker::Logging::StartLoggingContext(LogFilePath);
-			try {
-				result = robot.divide(1.0, 0.0);
-			}
-			catch (PythonWalker::PythonMethodError e) { }
+			Assert::IsFalse(robot.divide(1.0, 0.0).has_value());
+
 			PythonWalker::Logging::FlushLoggingContext();
 
 			std::string fileContents = PythonWalker::ScriptManager::GetFileContents(LogFilePath);

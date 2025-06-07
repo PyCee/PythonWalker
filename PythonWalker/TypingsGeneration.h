@@ -9,7 +9,8 @@
 #define __GEN_PYTHON_VARIABLE_SETTER_NAME(VARIABLE_NAME) Set_##VARIABLE_NAME
 #define __GEN_PYTHON_VARIABLE_GETTER(TYPE, VARIABLE_NAME)				\
 	TYPE& __GEN_PYTHON_VARIABLE_GETTER_NAME(VARIABLE_NAME)() {			\
-		__GEN_PYTHON_VARIABLE_INTERNAL_NAME(VARIABLE_NAME) = GetPythonVariable<TYPE>(#VARIABLE_NAME); \
+		std::optional<TYPE> value = GetPythonVariable<TYPE>(#VARIABLE_NAME); \
+		if(value) {__GEN_PYTHON_VARIABLE_INTERNAL_NAME(VARIABLE_NAME) = value.value(); } \
 		return __GEN_PYTHON_VARIABLE_INTERNAL_NAME(VARIABLE_NAME);		\
 	}			
 #define __GEN_PYTHON_VARIABLE_SETTER(TYPE, VARIABLE_NAME) \
@@ -102,8 +103,8 @@
 
 
 namespace PythonWalker {
-	PyObject* GetPyObjectDataContainer(std::string moduleName);
-	PyObject* GetPyObjectDataContainer(PyObject* pyObject);
+	std::optional<PyObject*> GetPyObjectDataContainer(std::string moduleName);
+	std::optional<PyObject*> GetPyObjectDataContainer(PyObject* pyObject);
 }
 
 /* Macro for generating a function that calls into an equivalent python method
@@ -114,15 +115,17 @@ namespace PythonWalker {
 	@param ... - Defines the parameters for the method. Must match the method parameter names in python. Pass in like
 */
 #define __PYW_TYPING_METHOD(PYOBJECT, RETURN_TYPE, FUNCTION_NAME, ...)												\
-	RETURN_TYPE FUNCTION_NAME(																		\
+	__GEN_PYTHON_FUNCTION_IF_NOT_VOID(RETURN_TYPE, std::optional<) RETURN_TYPE __GEN_PYTHON_FUNCTION_IF_NOT_VOID(RETURN_TYPE,>) FUNCTION_NAME(																		\
 		DOUBLE_APPLY(__GEN_PYTHON_FUNCTION_KEYWORD_PARAMETER, __GEN_PYTHON_FUNCTION_PARENTHESIS_COMMA, __VA_ARGS__) ) {	\
-		PyObject* container = PythonWalker::GetPyObjectDataContainer(PYOBJECT); \
+		std::optional<PyObject*> container = PythonWalker::GetPyObjectDataContainer(PYOBJECT); \
+		if(!container) {return __GEN_PYTHON_FUNCTION_IF_NOT_VOID(RETURN_TYPE, std::nullopt);} \
 		PyObject* keywords = PyDict_New();																	\
 		DOUBLE_APPLY(__GEN_PYTHON_FUNCTION_KEYWORD_ENTRY, __GEN_PYTHON_NOTHING, __VA_ARGS__)								\
-		__GEN_PYTHON_FUNCTION_IF_NOT_VOID(RETURN_TYPE, PyObject* result = )								\
-			PythonWalker::ExecuteFunction(container, #FUNCTION_NAME, keywords);														\
+		__GEN_PYTHON_FUNCTION_IF_NOT_VOID(RETURN_TYPE, std::optional<PyObject*> result = )								\
+			PythonWalker::ExecuteFunction(container.value(), #FUNCTION_NAME, keywords);														\
 		Py_DECREF(keywords);																				\
-		return __GEN_PYTHON_FUNCTION_IF_NOT_VOID(RETURN_TYPE, PythonWalker::GetValueFromPyObject<RETURN_TYPE>(result););										\
+		__GEN_PYTHON_FUNCTION_IF_NOT_VOID(RETURN_TYPE, if(!result){return std::nullopt;})								\
+		return __GEN_PYTHON_FUNCTION_IF_NOT_VOID(RETURN_TYPE, PythonWalker::GetValueFromPyObject<RETURN_TYPE>(result.value()));										\
 	}
 
 /* Macro for generating a function within a class, for mirroring a python class. Similar to __PYW_TYPING_METHOD.

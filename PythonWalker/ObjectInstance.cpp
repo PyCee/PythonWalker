@@ -13,11 +13,13 @@ PythonWalker::ObjectInstance::ObjectInstance(const char* moduleName, const char*
 		return;
 	}
 	ClassDef = ClassDefinition(moduleName, className);
-	PyObjectInstance = ClassDef.GetNewObject();
+	std::optional<PyObject*> newObject = ClassDef.GetNewObject();
+	PyObjectInstance = newObject.value();
 }
 PythonWalker::ObjectInstance::ObjectInstance(PyObject* pyObject) : PythonWalker::ObjectInstance() {
 	ClassDef = ClassDefinition(pyObject);
-	PyObjectInstance = ClassDef.GetNewObject();
+	std::optional<PyObject*> newObject = ClassDef.GetNewObject();
+	PyObjectInstance = newObject.value();
 	PythonWalker::CopyPyObjectValues(pyObject, PyObjectInstance);
 }
 PythonWalker::ObjectInstance::~ObjectInstance() {}
@@ -29,6 +31,7 @@ void PythonWalker::ObjectInstance::RegenerateFromScript()
 void PythonWalker::ObjectInstance::RegenerateFromScript(ClassDefinition classDef)
 {
 	PyObject* regenPyObject = PyObjectInstance;
-	PyObjectInstance = classDef.GetNewObject();
+	std::optional<PyObject*> obj = classDef.GetNewObject();
+	PyObjectInstance = obj.value();
 	PythonWalker::CopyPyObjectValues(regenPyObject, PyObjectInstance);
 }

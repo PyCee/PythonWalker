@@ -1,6 +1,7 @@
 #pragma once
 #include <iostream>
 #include <vector>
+#include <optional>
 #include "PythonHelper.h"
 
 namespace PythonWalker {
@@ -18,12 +19,12 @@ namespace PythonWalker {
 		}
 		std::string Module;
 		std::string ClassName;
-		PyObject* GetPythonClass() const;
-		PyObject* GetNewObject() const;
+		std::optional<PyObject*> GetPythonClass() const;
+		std::optional<PyObject*> GetNewObject() const;
 		bool IsValid() const;
 		bool IncludesModule(std::string moduleName);
 		static std::vector<ClassDefinition> FilterOutModule(std::string moduleName, std::vector<ClassDefinition> defs);
-		static std::vector<ClassDefinition> FilterToDerivingFromClass(std::string className, std::vector<ClassDefinition> defs);
-		std::vector<ClassDefinition> FilterToDerivedDefinitions(std::vector<ClassDefinition> definitions) const;
+		static std::optional<std::vector<ClassDefinition>> FilterToDerivingFromClass(std::string className, std::vector<ClassDefinition> defs);
+		std::optional<std::vector<ClassDefinition>> FilterToDerivedDefinitions(std::vector<ClassDefinition> definitions) const;
 	};
 }

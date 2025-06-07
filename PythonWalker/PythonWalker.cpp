@@ -10,10 +10,6 @@ void PythonWalker::Initialize() {
     config.pathconfig_warnings = 0;
     PyConfig_InitPythonConfig(&config);
     Py_Initialize();
-    if (!Py_IsInitialized())
-    {
-        throw PythonModuleNotInitialized();
-    }
 }
 void PythonWalker::Destroy() {
     if (Py_IsInitialized())
@@ -21,20 +17,24 @@ void PythonWalker::Destroy() {
         Py_Finalize();
     }
 }
-PyObject* PythonWalker::CreateObject(PyObject* pModule, const char* className)
+std::optional<PyObject*> PythonWalker::CreateObject(PyObject* pModule, const char* className)
 {
-    PyObject* pythonClass = Module::GetPythonClass(pModule, className);
+    std::optional<PyObject*> pythonClass = Module::GetPythonClass(pModule, className);
+
+    if (!pythonClass) {
+        return std::nullopt;
+    }
 
     // Creates an instance of the class
     PyObject* pythonClassInstance;
-    if (PyCallable_Check(pythonClass)) {
-        pythonClassInstance = PyObject_CallObject(pythonClass, nullptr);
+    if (PyCallable_Check(pythonClass.value())) {
+        pythonClassInstance = PyObject_CallObject(pythonClass.value(), nullptr);
         //Py_DECREF(pythonClass);
     }
     else {
         std::cout << "Cannot instantiate the Python class" << std::endl;
         //Py_DECREF(pythonClass);
-        return nullptr;
+        return std::nullopt;
     }
     return pythonClassInstance;
 }
@@ -54,7 +54,7 @@ void PythonWalker::CopyPyObjectValues(PyObject* src, PyObject* dest)
 }
 
 
-PyObject* PythonWalker::ExecuteFunction(PyObject* pythonObject, const char* functionName, PyObject* keywords)
+std::optional<PyObject*> PythonWalker::ExecuteFunction(PyObject* pythonObject, const char* functionName, PyObject* keywords)
 {
     if (pythonObject == nullptr) {
         return nullptr;
@@ -62,7 +62,7 @@ PyObject* PythonWalker::ExecuteFunction(PyObject* pythonObject, const char* func
     PyObject* method = PyObject_GetAttrString(pythonObject, functionName);
     if (method == nullptr) {
         PyErr_Print();
-        throw PythonMethodDNE(functionName, "", "");
+        return std::nullopt;
     }
 
     PyObject* args = PyTuple_New(0);
@@ -70,7 +70,7 @@ PyObject* PythonWalker::ExecuteFunction(PyObject* pythonObject, const char* func
     PyObject* value = PyObject_Call(method, args, keywords);
     if (value == nullptr) {
         PyErr_Print();
-        throw PythonMethodError(functionName, "", "", "");
+        return std::nullopt;
     }
 
     //Py_DECREF(args);
@@ -80,9 +80,9 @@ PyObject* PythonWalker::ExecuteFunction(PyObject* pythonObject, const char* func
 }
 
 
-PyObject* PythonWalker::GetPyObjectDataContainer(std::string moduleName) {
+std::optional<PyObject*> PythonWalker::GetPyObjectDataContainer(std::string moduleName) {
     return PythonWalker::Module::Load(moduleName);
 }
-PyObject* PythonWalker::GetPyObjectDataContainer(PyObject* pyObject) {
+std::optional<PyObject*> PythonWalker::GetPyObjectDataContainer(PyObject* pyObject) {
     return pyObject;
 }

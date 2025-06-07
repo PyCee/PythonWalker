@@ -18,7 +18,7 @@ static void SetPythonSystemVar(std::string sysVar, std::string newVal)
 void PythonWalker::Logging::StartLoggingContext(std::filesystem::path path)
 {
 	if (GetCurrentLogFile().string().length() > 0) {
-		throw PythonLoggingContextAlreadyOpen(path.string(), GetCurrentLogFile().string());
+		return;
 	}
 
 	currentLogPath = path;

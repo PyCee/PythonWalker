@@ -21,14 +21,17 @@ PythonWalker::ClassDefinition::ClassDefinition(PyObject* pyObject)
     PyObject* pyClass = PyObject_GetAttrString(pyObject, "__class__");
     ClassName = PyUnicode_AsUTF8(PyObject_GetAttrString(pyClass, "__name__"));
 }
-PyObject* PythonWalker::ClassDefinition::GetPythonClass() const
+std::optional<PyObject*> PythonWalker::ClassDefinition::GetPythonClass() const
 {
 	return PythonWalker::Module::GetPythonClass(Module.c_str(), ClassName.c_str());
 }
-PyObject* PythonWalker::ClassDefinition::GetNewObject() const
+std::optional<PyObject*> PythonWalker::ClassDefinition::GetNewObject() const
 {
-    PyObject* pModule = PythonWalker::Module::Load(Module);
-    return PythonWalker::CreateObject(pModule, ClassName.c_str());
+    std::optional<PyObject*> pModule = PythonWalker::Module::Load(Module);
+    if (!pModule) {
+        std::nullopt;
+    }
+    return PythonWalker::CreateObject(pModule.value(), ClassName.c_str());
 }
 bool PythonWalker::ClassDefinition::IsValid() const
 {
@@ -50,13 +53,17 @@ PythonWalker::ClassDefinition::FilterOutModule(std::string moduleName, std::vect
     }
     return results;
 }
-std::vector<PythonWalker::ClassDefinition>
+std::optional<std::vector<PythonWalker::ClassDefinition>>
 PythonWalker::ClassDefinition::FilterToDerivingFromClass(std::string className, std::vector<PythonWalker::ClassDefinition> defs)
 {
     bool foundBaseClass = false;
     for (ClassDefinition def : defs) {
         if (def.ClassName == className) {
-            defs = def.FilterToDerivedDefinitions(defs);
+            std::optional< std::vector<PythonWalker::ClassDefinition>> resultingDefs = def.FilterToDerivedDefinitions(defs);
+            if (!resultingDefs) {
+                return std::nullopt;
+            }
+            defs = resultingDefs.value();
             foundBaseClass = true;
             break;
         }
@@ -67,17 +74,20 @@ PythonWalker::ClassDefinition::FilterToDerivingFromClass(std::string className, 
     }
     return defs;
 }
-std::vector<PythonWalker::ClassDefinition>
+std::optional<std::vector<PythonWalker::ClassDefinition>>
 PythonWalker::ClassDefinition::FilterToDerivedDefinitions(std::vector<PythonWalker::ClassDefinition> definitions) const
 {
-    PyObject* baseClass = GetPythonClass();
+    std::optional<PyObject*> baseClass = GetPythonClass();
+    if (!baseClass) {
+        return std::nullopt;
+    }
     std::vector<ClassDefinition> results;
     for (ClassDefinition def : definitions) {
         if (def.ClassName == ClassName) {
             continue;
         }
-        PyObject* pClass = def.GetPythonClass();
-        if (PyObject_IsSubclass(pClass, baseClass)) {
+        PyObject* pClass = def.GetPythonClass().value();
+        if (PyObject_IsSubclass(pClass, baseClass.value())) {
             results.push_back(def);
         }
     }

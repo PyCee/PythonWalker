@@ -13,6 +13,7 @@ namespace PythonWalker {
 	public:
 
 		static std::filesystem::path GetGeneratedFilePath(std::filesystem::path path, std::vector<std::string> module);
+		static std::filesystem::path GetGeneratedFilePath(std::filesystem::path path, ClassDefinition classDef);
 		static std::filesystem::path GeneratePythonClass(std::filesystem::path path, std::vector<std::string> module, std::string code, bool append=false);
 		static std::filesystem::path GeneratePythonClass(std::filesystem::path path, std::string module, std::string code, bool append=false);
 		static std::filesystem::path GeneratePythonClass(std::filesystem::path path, ClassDefinition def, std::string code, bool append=false);

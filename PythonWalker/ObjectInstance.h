@@ -3,7 +3,6 @@
 #include <iostream>
 #include <format>
 #include "PythonHelper.h"
-#include "Exceptions.h"
 #include "TypeConversions.h"
 #include "ClassDefinition.h"
 
@@ -26,32 +25,25 @@ namespace PythonWalker {
 	public:
 
 		template <typename T>
-		T GetPythonVariable(const char* variableName) {
+		std::optional<T> GetPythonVariable(const char* variableName) {
 			if (PyObjectInstance == nullptr) {
-				throw PythonObjectNotInitialized();
+				return std::nullopt;
 			}
 
 			PyObject* pyVariableName = PyUnicode_FromString(variableName);
 			if (!PyObject_HasAttr(PyObjectInstance, pyVariableName)) {
-				throw PythonAttributeDNE(variableName, ClassDef.ClassName, ClassDef.Module);
+				return std::nullopt;
 			}
 			PyObject* pyValue = PyObject_GetAttr(PyObjectInstance, pyVariableName);
 			if (pyValue == NULL) {
-				throw PythonAttributeDNE(variableName, ClassDef.ClassName, ClassDef.Module);
+				return std::nullopt;
 			}
 			return GetValueFromPyObject<T>(pyValue);
 		}
 
 		template <typename T>
 		void SetPythonVariable(const char* variableName, T value) {
-			if (PyObjectInstance == nullptr) {
-				throw PythonObjectNotInitialized();
-			}
-
 			PyObject* pyVariableName = PyUnicode_FromString(variableName);
-			if (!PyObject_HasAttr(PyObjectInstance, pyVariableName)) {
-				throw PythonAttributeDNE(variableName, ClassDef.ClassName, ClassDef.Module);
-			}
 			PyObject* pyValue = GetPyObjectFromValue(value);
 			PyObject_SetAttr(PyObjectInstance, pyVariableName, pyValue);
 		}

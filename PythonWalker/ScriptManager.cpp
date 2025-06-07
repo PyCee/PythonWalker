@@ -40,7 +40,11 @@ std::vector<PythonWalker::ClassDefinition> PythonWalker::ScriptManager::GetScrip
     }
     if (!baseClassName.empty())
     {
-        results = ClassDefinition::FilterToDerivingFromClass(baseClassName, results);
+        std::optional<std::vector<ClassDefinition>> filteredResults = ClassDefinition::FilterToDerivingFromClass(baseClassName, results);
+        if (!filteredResults) {
+            std::nullopt;
+        }
+        results = filteredResults.value();
     }
     if (excludeModules.size() > 0) {
         for (std::string excludeModule : excludeModules) {
