@@ -4,6 +4,13 @@
 PythonWalker::ClassDefinition::ClassDefinition()
 {
 }
+PythonWalker::ClassDefinition::ClassDefinition(const char* fullClassPath)
+{
+    std::string fullClassPathStr(fullClassPath);
+    size_t lastDotOffset = fullClassPathStr.find_last_of(".");
+    ClassName = fullClassPathStr.substr(lastDotOffset + 1).c_str();
+    Module = fullClassPathStr.substr(0, lastDotOffset).c_str();
+}
 PythonWalker::ClassDefinition::ClassDefinition(const char* module, const char* className)
 	: Module(module), ClassName(className)
 {

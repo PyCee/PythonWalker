@@ -8,6 +8,7 @@ namespace PythonWalker {
 	{
 	public:
 		ClassDefinition();
+		ClassDefinition(const char* fullClassPath);
 		ClassDefinition(const char* module, const char* className);
 		ClassDefinition(PyObject* pyObject);
 

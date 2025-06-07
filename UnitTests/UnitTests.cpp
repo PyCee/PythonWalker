@@ -411,6 +411,15 @@ namespace PythonInterfaceTestCases
 			Assert::AreEqual(expectedAge, swappingSnake.age);
 			Assert::AreEqual("Animal", swappingSnake.getType());
 		}
+		TEST_METHOD(ConstructClassDefinitionFromOneString)
+		{
+			std::string module = "Subfolder.Module";
+			std::string className = "ClassName";
+			std::string singleClassPath = module + "." + className;
+			PythonWalker::ClassDefinition def(singleClassPath.c_str());
+			Assert::AreEqual(module, def.Module);
+			Assert::AreEqual(className, def.ClassName);
+		}
 	};
 	TEST_CLASS(PythonInterfaceExceptionTestClass)
 	{
@@ -563,7 +572,8 @@ namespace CodeGenerationTestCases
 	public:
 		TEST_METHOD_CLEANUP(CleanupCodeGenMethod)
 		{
-			PythonWalker::CodeGeneration::DeletePythonModule(currentPath, "GeneratedFiles", true);
+			std::string module = "GeneratedFiles";
+			PythonWalker::CodeGeneration::DeletePythonModule(currentPath, module, true);
 		}
 		PythonWalker::ClassDefinition RobotDefinition = PythonWalker::ClassDefinition("GeneratedFiles.Robot", "Robot");
 		PythonWalker::ClassDefinition RobotTwoDefinition = PythonWalker::ClassDefinition("GeneratedFiles.Robot", "RobotTwo");
@@ -859,7 +869,8 @@ namespace PythonLoggingTestCases
 		TEST_METHOD(SupportReplay)
 		{
 			// Generate module with failing method
-			PythonWalker::CodeGeneration::GeneratePythonClass(currentPath, "GeneratedFiles.Robot", RobotCodeWithZeroErrorString);
+			std::string module = "GeneratedFiles.Robot";
+			PythonWalker::CodeGeneration::GeneratePythonClass(currentPath, module, RobotCodeWithZeroErrorString);
 			TestRobotClass robot = TestRobotClass("GeneratedFiles.Robot", "Robot");
 			float result;
 
@@ -885,7 +896,7 @@ namespace PythonLoggingTestCases
 			// TODO Test replay with error
 			// TODO Generate module with working method
 			// 
-			PythonWalker::CodeGeneration::GeneratePythonClass(currentPath, "GeneratedFiles.Robot", RobotCodeWithZeroErrorFixedString);
+			PythonWalker::CodeGeneration::GeneratePythonClass(currentPath, module, RobotCodeWithZeroErrorFixedString);
 			
 			/*
 			robot = TestRobotClass("GeneratedFiles.Robot", "Robot");
