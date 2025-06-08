@@ -16,8 +16,8 @@ namespace PythonWalker {
 		~ObjectInstance();
 
 		bool IsInitialized() const { return PyObjectInstance != nullptr; }
-		void RegenerateFromScript();
-		void RegenerateFromScript(ClassDefinition);
+		bool RegenerateFromScript();
+		bool RegenerateFromScript(ClassDefinition);
 
 		PyObject* PyObjectInstance;
 		ClassDefinition ClassDef;
