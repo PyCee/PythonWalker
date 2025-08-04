@@ -40,6 +40,7 @@ bool PythonWalker::ObjectInstance::RegenerateFromScript(ClassDefinition classDef
 		PyObject* regenPyObject = PyObjectInstance;
 		PyObjectInstance = obj.value();
 		PythonWalker::CopyPyObjectValues(regenPyObject, PyObjectInstance);
+		ClassDef = classDef;
 		return true;
 	}
 	return false;

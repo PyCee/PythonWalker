@@ -403,16 +403,30 @@ namespace PythonInterfaceTestCases
 		TEST_METHOD(KeepVariableThroughChangingSource)
 		{
 			TestPythonClass swappingSnake = TestPythonClass();
+			PythonWalker::ClassDefinition animalDef = PythonWalker::ClassDefinition("TestAnimal", "TestAnimal");
 			int expectedAge = 19;
 			swappingSnake.age = expectedAge;
 			Assert::AreEqual(expectedAge, swappingSnake.age);
 			Assert::AreEqual("Snake", swappingSnake.getType().value());
 
-			swappingSnake.RegenerateFromScript(PythonWalker::ClassDefinition("TestAnimal", "TestAnimal"));
+			swappingSnake.RegenerateFromScript(animalDef);
 
 			// Make sure the value of age sticks through the reassignment, but the function was updated
 			Assert::AreEqual(expectedAge, swappingSnake.age);
 			Assert::AreEqual("Animal", swappingSnake.getType().value());
+			Assert::IsTrue(swappingSnake.ClassDef == animalDef);
+		}
+		TEST_METHOD(ClassDefinitionEquality)
+		{
+
+			PythonWalker::ClassDefinition animalDef = PythonWalker::ClassDefinition("TestAnimal", "TestAnimal");
+			PythonWalker::ClassDefinition animalDef2 = PythonWalker::ClassDefinition("TestAnimal", "TestAnimal");
+			PythonWalker::ClassDefinition nonAnimalClassDef = PythonWalker::ClassDefinition("TestAnimal", "TestNonAnimal");
+			PythonWalker::ClassDefinition nonAnimalModuleDef = PythonWalker::ClassDefinition("TestNonAnimal", "TestAnimal");
+
+			Assert::IsTrue(animalDef == animalDef2);
+			Assert::IsTrue(animalDef != nonAnimalClassDef);
+			Assert::IsTrue(animalDef != nonAnimalModuleDef);
 		}
 		TEST_METHOD(ConstructClassDefinitionFromOneString)
 		{

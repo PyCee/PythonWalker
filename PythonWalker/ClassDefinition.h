@@ -13,7 +13,7 @@ namespace PythonWalker {
 		ClassDefinition(const char* module, const char* className);
 		ClassDefinition(PyObject* pyObject);
 
-		bool operator == (ClassDefinition& def) const
+		bool operator == (ClassDefinition const& def) const
 		{
 			return Module == def.Module && ClassName == def.ClassName;
 		}
