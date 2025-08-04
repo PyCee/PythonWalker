@@ -82,11 +82,12 @@ PythonWalker::ClassDefinition::FilterToDerivedDefinitions(std::vector<PythonWalk
         return std::nullopt;
     }
     std::vector<ClassDefinition> results;
-    for (ClassDefinition def : definitions) {
+    for (ClassDefinition& def : definitions) {
         if (def.ClassName == ClassName) {
             continue;
         }
-        PyObject* pClass = def.GetPythonClass().value();
+        std::optional<PyObject*> classVal = def.GetPythonClass();
+        PyObject* pClass = classVal.value();
         if (PyObject_IsSubclass(pClass, baseClass.value())) {
             results.push_back(def);
         }
