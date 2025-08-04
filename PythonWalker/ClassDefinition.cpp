@@ -28,10 +28,10 @@ std::optional<PyObject*> PythonWalker::ClassDefinition::GetPythonClass() const
 std::optional<PyObject*> PythonWalker::ClassDefinition::GetNewObject() const
 {
     std::optional<PyObject*> pModule = PythonWalker::Module::Load(Module);
-    if (!pModule) {
-        std::nullopt;
+    if (pModule) {
+        return PythonWalker::CreateObject(pModule.value(), ClassName.c_str());
     }
-    return PythonWalker::CreateObject(pModule.value(), ClassName.c_str());
+    return std::nullopt;
 }
 bool PythonWalker::ClassDefinition::IsValid() const
 {
